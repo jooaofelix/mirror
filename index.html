@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerador de Espelho de DANFE (SEM VALOR FISCAL)</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --azul:#1d4d8f;
+    --cinza:#eef0f2;
+    --borda:#111;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:Arial, Helvetica, sans-serif;
+    background:#dfe3e8;
+    color:#111;
+  }
+  /* ---------- layout geral ---------- */
+  .app{
+    display:grid;
+    grid-template-columns:380px 1fr;
+    min-height:100vh;
+  }
+  .painel{
+    background:#fff;
+    border-right:1px solid #ccc;
+    padding:14px;
+    overflow-y:auto;
+    max-height:100vh;
+  }
+  .visual{
+    padding:24px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:14px;
+    overflow-x:auto;
+  }
+  .aviso-topo{
+    background:#b00020;
+    color:#fff;
+    padding:10px 14px;
+    font-size:13px;
+    font-weight:700;
+    text-align:center;
+    line-height:1.4;
+  }
+  .aviso-topo small{
+    display:block;
+    font-weight:400;
+    font-size:11px;
+    margin-top:2px;
+  }
+  h2.titulo-secao{
+    font-size:13px;
+    background:var(--azul);
+    color:#fff;
+    padding:6px 8px;
+    margin:18px 0 8px;
+    border-radius:3px;
+  }
+  h2.titulo-secao:first-child{margin-top:0;}
+  .campo-form{
+    margin-bottom:8px;
+  }
+  .campo-form label{
+    display:block;
+    font-size:11px;
+    font-weight:600;
+    color:#333;
+    margin-bottom:2px;
+  }
+  .campo-form input,
+  .campo-form select,
+  .campo-form textarea{
+    width:100%;
+    padding:5px 6px;
+    font-size:12px;
+    border:1px solid #bbb;
+    border-radius:3px;
+    font-family:inherit;
+  }
+  .linha2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .linha3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+  .botoes-topo{
+    display:flex;
+    gap:8px;
+    margin-bottom:10px;
+    flex-wrap:wrap;
+  }
+  .btn{
+    cursor:pointer;
+    border:none;
+    border-radius:4px;
+    padding:8px 12px;
+    font-size:12px;
+    font-weight:700;
+    color:#fff;
+    background:var(--azul);
+  }
+  .btn.secundario{background:#555;}
+  .btn.pequeno{padding:4px 8px;font-size:11px;}
+  .btn.vermelho{background:#b00020;}
+  .btn.verde{background:#1a7d3a;}
+  .produto-item, .dup-item{
+    border:1px solid #ddd;
+    border-radius:4px;
+    padding:8px;
+    margin-bottom:8px;
+    background:#fafafa;
+  }
+  .produto-item .linha3, .produto-item .linha2{margin-bottom:6px;}
+  .file-drop{
+    border:2px dashed #aaa;
+    border-radius:6px;
+    padding:12px;
+    text-align:center;
+    font-size:11px;
+    color:#555;
+    margin-bottom:6px;
+  }
+  .file-drop.recomendado{
+    border-color:#1a7d3a;
+    background:#f2fbf5;
+  }
+  .file-drop .titulo-drop{
+    font-weight:700;
+    margin-bottom:6px;
+  }
+  .nota-heuristica{
+    font-size:10.5px;
+    color:#8a6d00;
+    background:#fff8e1;
+    border:1px solid #ffe082;
+    border-radius:4px;
+    padding:6px 8px;
+    margin-bottom:8px;
+  }
+  .nota-heuristica strong.ok{color:#1a7d3a;}
+  .nota-heuristica.sucesso{
+    color:#1a5d2e;
+    background:#e9f7ee;
+    border-color:#a8dbb6;
+  }
+
+  /* ---------- DANFE em si ---------- */
+  #danfe-page{
+    width:210mm;
+    min-height:297mm;
+    background:#fff;
+    padding:5mm;
+    box-shadow:0 0 8px rgba(0,0,0,.3);
+    position:relative;
+    font-size:10px;
+    color:#000;
+  }
+  .marca-dagua{
+    position:absolute;
+    top:0;left:0;right:0;bottom:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    pointer-events:none;
+    overflow:hidden;
+    z-index:5;
+  }
+  .marca-dagua span{
+    transform:rotate(-35deg);
+    font-size:52px;
+    font-weight:900;
+    color:rgba(176,0,32,.16);
+    white-space:nowrap;
+    letter-spacing:4px;
+  }
+  .faixa-aviso{
+    background:#b00020;
+    color:#fff;
+    text-align:center;
+    font-weight:700;
+    font-size:9.5px;
+    padding:3px 4px;
+    margin-bottom:3px;
+    letter-spacing:.3px;
+  }
+  table.grid{
+    width:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
+  }
+  table.grid td{
+    border:1px solid var(--borda);
+    vertical-align:top;
+    padding:2px 4px;
+    position:relative;
+  }
+  .lbl{
+    display:block;
+    font-size:6px;
+    text-transform:uppercase;
+    line-height:1.1;
+    color:#000;
+  }
+  .val{
+    font-size:10.5px;
+    font-weight:600;
+    min-height:12px;
+    word-break:break-word;
+    white-space:pre-wrap;
+  }
+  .val.grande{font-size:15px;}
+  .val.mono{font-family:'Courier New',monospace;letter-spacing:1px;}
+  .sec-titulo{
+    font-size:8.5px;
+    font-weight:700;
+    background:var(--cinza);
+    border:1px solid var(--borda);
+    border-bottom:none;
+    padding:2px 4px;
+    margin-top:4px;
+  }
+  .no-border-top{border-top:none !important;}
+
+  /* cabecalho */
+  .cabecalho{display:grid;grid-template-columns:38% 24% 38%;}
+  .cab-emit{border:1px solid var(--borda);padding:4px;display:flex;flex-direction:column;gap:2px;}
+  .cab-emit .razao{font-size:13px;font-weight:800;}
+  .cab-emit .end{font-size:9px;}
+  .cab-danfe{border:1px solid var(--borda);border-left:none;padding:4px;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;}
+  .cab-danfe .titulo{font-size:20px;font-weight:900;}
+  .cab-danfe .sub{font-size:7px;}
+  .tipo-box{border:1px solid var(--borda);padding:2px 6px;font-size:9px;font-weight:700;}
+  .cab-danfe .numsserie{font-size:9px;font-weight:700;}
+  .cab-bar{border:1px solid var(--borda);border-left:none;padding:4px;display:flex;flex-direction:column;align-items:center;gap:2px;}
+  .cab-bar svg{width:100%;max-height:38px;}
+  .cab-bar .consulta{font-size:6px;text-align:center;}
+  .cab-bar .chave{font-size:9px;font-weight:700;font-family:'Courier New',monospace;letter-spacing:1px;text-align:center;}
+
+  @media print{
+    body{background:#fff;}
+    .painel, .aviso-topo, .botoes-topo{display:none !important;}
+    .app{display:block;}
+    .visual{padding:0;}
+    #danfe-page{box-shadow:none;margin:0;}
+  }
+</style>
+</head>
+<body>
+
+<div class="aviso-topo">
+  ESPELHO / MODELO VISUAL DE DANFE — SEM VALOR FISCAL
+  <small>Este gerador cria apenas uma representação visual para fins de estudo, teste ou layout. O documento resultante NÃO é uma DANFE válida, não substitui a NF-e original e não tem qualquer validade fiscal, tributária ou legal.</small>
+</div>
+
+<div class="app">
+  <!-- ===================== PAINEL DE FORMULÁRIO ===================== -->
+  <div class="painel">
+    <div class="botoes-topo">
+      <button class="btn verde" onclick="baixarPDF()">⬇ Baixar PDF</button>
+      <button class="btn secundario" onclick="window.print()">🖨 Imprimir</button>
+      <button class="btn vermelho" onclick="limparTudo()">Limpar</button>
+    </div>
+
+    <h2 class="titulo-secao">Importar dados (opcional)</h2>
+
+    <div class="file-drop">
+      <div class="titulo-drop">XML de NFe</div>
+      <div>Preenchimento automático completo e exato.</div>
+      <input type="file" id="input-xml" accept=".xml" onchange="handleXml(event)">
+    </div>
+
+    <div class="file-drop recomendado">
+      <div class="titulo-drop">✅ Modelo Excel (recomendado)</div>
+      <div>Padrão de arquivo com leitura exata (sem adivinhação). Baixe o modelo, preencha as colunas e reenvie.</div>
+      <div style="margin:8px 0;">
+        <button class="btn pequeno verde" type="button" onclick="baixarModeloExcel()">⬇ Baixar modelo Excel</button>
+      </div>
+      <input type="file" id="input-excel" accept=".xlsx,.xls" onchange="handleExcel(event)">
+      <div id="excel-status"></div>
+    </div>
+
+    <div class="file-drop">
+      <div class="titulo-drop">PDF / Word / TXT</div>
+      <div>Tenta extrair alguns dados por busca de padrões (best-effort).</div>
+      <input type="file" id="input-doc" accept=".pdf,.docx,.doc,.txt" onchange="handleDoc(event)">
+      <div id="doc-status"></div>
+    </div>
+
+    <div class="nota-heuristica">
+      ⚠ A extração de PDF/Word/TXT é uma busca por padrões (CNPJ, IE, chave de 44 dígitos, valores, datas, endereços) e <strong>nunca é garantida</strong> — o layout de cada documento é diferente. Sempre confira e complete manualmente os campos abaixo.<br><br>
+      <strong class="ok">✅ Para importação 100% confiável</strong>, use o <strong>modelo Excel</strong> acima: ele tem colunas fixas e é lido de forma exata, sem heurística.
+    </div>
+
+    <h2 class="titulo-secao">Emitente</h2>
+    <div class="campo-form"><label>Razão Social</label><input id="e_razao" oninput="render()" value="EMPRESA MODELO LTDA"></div>
+    <div class="campo-form"><label>Endereço</label><input id="e_endereco" oninput="render()" value="RUA EXEMPLO, 123"></div>
+    <div class="linha3">
+      <div class="campo-form"><label>Bairro</label><input id="e_bairro" oninput="render()" value="CENTRO"></div>
+      <div class="campo-form"><label>CEP</label><input id="e_cep" oninput="render()" value="00000-000"></div>
+      <div class="campo-form"><label>Fone/Fax</label><input id="e_fone" oninput="render()" value="(00) 0000-0000"></div>
+    </div>
+    <div class="linha2">
+      <div class="campo-form"><label>Município</label><input id="e_municipio" oninput="render()" value="SÃO PAULO"></div>
+      <div class="campo-form"><label>UF</label><input id="e_uf" oninput="render()" value="SP"></div>
+    </div>
+    <div class="linha3">
+      <div class="campo-form"><label>CNPJ</label><input id="e_cnpj" oninput="render()" value="00.000.000/0001-00"></div>
+      <div class="campo-form"><label>Inscr. Estadual</label><input id="e_ie" oninput="render()" value="000.000.000.000"></div>
+      <div class="campo-form"><label>IE Subst. Trib.</label><input id="e_iest" oninput="render()" value=""></div>
+    </div>
+
+    <h2 class="titulo-secao">Nota / Chave de acesso</h2>
+    <div class="linha3">
+      <div class="campo-form"><label>Natureza da Operação</label><input id="n_natureza" oninput="render()" value="VENDA DE MERCADORIA"></div>
+      <div class="campo-form"><label>Número</label><input id="n_numero" oninput="render()" value="000000001"></div>
+      <div class="campo-form"><label>Série</label><input id="n_serie" oninput="render()" value="1"></div>
+    </div>
+    <div class="linha3">
+      <div class="campo-form"><label>Tipo</label>
+        <select id="n_tipo" onchange="render()">
+          <option value="0">0 - Entrada</option>
+          <option value="1" selected>1 - Saída</option>
+        </select>
+      </div>
+      <div class="campo-form"><label>Data Emissão</label><input id="n_dataemissao" type="date" oninput="render()"></div>
+      <div class="campo-form"><label>Data Saída/Entrada</label><input id="n_datasaida" type="date" oninput="render()"></div>
+    </div>
+    <div class="campo-form"><label>Chave de Acesso (44 dígitos)</label><input id="n_chave" oninput="render()" maxlength="44" value="00000000000000000000000000000000000000000000"></div>
+    <div class="campo-form"><label>Protocolo de Autorização</label><input id="n_protocolo" oninput="render()" value="000000000000000 - 01/01/2026 00:00:00"></div>
+
+    <h2 class="titulo-secao">Destinatário / Remetente</h2>
+    <div class="campo-form"><label>Nome/Razão Social</label><input id="d_nome" oninput="render()" value="CLIENTE MODELO"></div>
+    <div class="linha2">
+      <div class="campo-form"><label>CNPJ/CPF</label><input id="d_cnpj" oninput="render()" value="000.000.000-00"></div>
+      <div class="campo-form"><label>Inscr. Estadual</label><input id="d_ie" oninput="render()" value=""></div>
+    </div>
+    <div class="campo-form"><label>Endereço</label><input id="d_endereco" oninput="render()" value=""></div>
+    <div class="linha3">
+      <div class="campo-form"><label>Bairro</label><input id="d_bairro" oninput="render()" value=""></div>
+      <div class="campo-form"><label>CEP</label><input id="d_cep" oninput="render()" value=""></div>
+      <div class="campo-form"><label>Fone/Fax</label><input id="d_fone" oninput="render()" value=""></div>
+    </div>
+    <div class="linha2">
+      <div class="campo-form"><label>Município</label><input id="d_municipio" oninput="render()" value=""></div>
+      <div class="campo-form"><label>UF</label><input id="d_uf" oninput="render()" value=""></div>
+    </div>
+    <div class="campo-form"><label>Hora da Saída</label><input id="d_hora" type="time" oninput="render()"></div>
+
+    <h2 class="titulo-secao">Fatura / Duplicatas</h2>
+    <div id="lista-duplicatas"></div>
+    <button class="btn pequeno" onclick="addDuplicata()">+ Duplicata</button>
+
+    <h2 class="titulo-secao">Transportador / Volumes</h2>
+    <div class="campo-form"><label>Nome/Razão Social</label><input id="t_nome" oninput="render()" value=""></div>
+    <div class="linha3">
+      <div class="campo-form"><label>Frete por conta</label>
+        <select id="t_frete" onchange="render()">
+          <option value="0">0 - Emitente</option>
+          <option value="1">1 - Destinatário</option>
+          <option value="9">9 - Sem frete</option>
+        </select>
+      </div>
+      <div class="campo-form"><label>Placa</label><input id="t_placa" oninput="render()" value=""></div>
+      <div class="campo-form"><label>UF Placa</label><input id="t_ufplaca" oninput="render()" value=""></div>
+    </div>
+    <div class="linha2">
+      <div class="campo-form"><label>CNPJ/CPF</label><input id="t_cnpj" oninput="render()" value=""></div>
+      <div class="campo-form"><label>Inscr. Estadual</label><input id="t_ie" oninput="render()" value=""></div>
+    </div>
+    <div class="campo-form"><label>Endereço</label><input id="t_endereco" oninput="render()" value=""></div>
+    <div class="linha2">
+      <div class="campo-form"><label>Município</label><input id="t_municipio" oninput="render()" value=""></div>
+      <div class="campo-form"><label>UF</label><input id="t_uf" oninput="render()" value=""></div>
+    </div>
+    <div class="linha3">
+      <div class="campo-form"><label>Quantidade</label><input id="t_qtd" oninput="render()" value=""></div>
+      <div class="campo-form"><label>Espécie</label><input id="t_especie" oninput="render()" value=""></div>
+      <div class="campo-form"><label>Marca</label><input id="t_marca" oninput="render()" value=""></div>
+    </div>
+    <div class="linha3">
+      <div class="campo-form"><label>Numeração</label><input id="t_numeracao" oninput="render()" value=""></div>
+      <div class="campo-form"><label>Peso Bruto</label><input id="t_pesobruto" oninput="render()" value=""></div>
+      <div class="campo-form"><label>Peso Líquido</label><input id="t_pesoliq" oninput="render()" value=""></div>
+    </div>
+
+    <h2 class="titulo-secao">Produtos / Serviços</h2>
+    <div id="lista-produtos"></div>
+    <button class="btn pequeno" onclick="addProduto()">+ Produto</button>
+    <button class="btn pequeno secundario" onclick="recalcularTotais()">Recalcular totais</button>
+
+    <h2 class="titulo-secao">Cálculo do Imposto (totais)</h2>
+    <div class="linha3">
+      <div class="campo-form"><label>Base Cálc. ICMS</label><input id="i_baseicms" oninput="render()" value="0,00"></div>
+      <div class="campo-form"><label>Valor ICMS</label><input id="i_valoricms" oninput="render()" value="0,00"></div>
+      <div class="campo-form"><label>Base ICMS ST</label><input id="i_baseicmsst" oninput="render()" value="0,00"></div>
+    </div>
+    <div class="linha3">
+      <div class="campo-form"><label>Valor ICMS ST</label><input id="i_valoricmsst" oninput="render()" value="0,00"></div>
+      <div class="campo-form"><label>Total Produtos</label><input id="i_totalprodutos" oninput="render()" value="0,00"></div>
+      <div class="campo-form"><label>Valor Frete</label><input id="i_frete" oninput="render()" value="0,00"></div>
+    </div>
+    <div class="linha3">
+      <div class="campo-form"><label>Valor Seguro</label><input id="i_seguro" oninput="render()" value="0,00"></div>
+      <div class="campo-form"><label>Desconto</label><input id="i_desconto" oninput="render()" value="0,00"></div>
+      <div class="campo-form"><label>Outras Desp.</label><input id="i_outras" oninput="render()" value="0,00"></div>
+    </div>
+    <div class="linha2">
+      <div class="campo-form"><label>Total IPI</label><input id="i_ipi" oninput="render()" value="0,00"></div>
+      <div class="campo-form"><label>Total da Nota</label><input id="i_totalnota" oninput="render()" value="0,00"></div>
+    </div>
+
+    <h2 class="titulo-secao">Dados Adicionais</h2>
+    <div class="campo-form"><label>Informações Complementares</label><textarea id="a_info" rows="3" oninput="render()">Documento gerado apenas como modelo visual — sem validade fiscal.</textarea></div>
+    <div class="campo-form"><label>Reservado ao Fisco</label><textarea id="a_fisco" rows="2" oninput="render()"></textarea></div>
+  </div>
+
+  <!-- ===================== VISUAL DA DANFE ===================== -->
+  <div class="visual">
+    <div id="danfe-page">
+      <div class="marca-dagua"><span>SEM VALOR FISCAL &nbsp; • &nbsp; MODELO &nbsp; • &nbsp; SEM VALOR FISCAL</span></div>
+
+      <div class="faixa-aviso">DOCUMENTO MERAMENTE ILUSTRATIVO — NÃO É UM DANFE VÁLIDO — SEM VALOR FISCAL, TRIBUTÁRIO OU LEGAL</div>
+
+      <!-- tira de recebimento -->
+      <table class="grid" style="margin-bottom:0;">
+        <tr>
+          <td style="width:78%;">
+            <span class="lbl">Recebemos de <strong id="r_emit"></strong> os produtos e/ou serviços constantes da nota fiscal indicada abaixo</span>
+            <div class="val" style="font-size:8px;">Emissão: <span id="r_emissao"></span> &nbsp;&nbsp; Valor total: R$ <span id="r_total"></span></div>
+            <div class="val" style="font-size:8px;margin-top:8px;">Data de recebimento: ______/______/__________ &nbsp;&nbsp; Identificação e assinatura do recebedor: ____________________________________</div>
+          </td>
+          <td style="width:22%;text-align:center;">
+            <span class="lbl">NF-e</span>
+            <div class="val grande" id="r_numserie"></div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- cabeçalho -->
+      <div class="cabecalho">
+        <div class="cab-emit">
+          <div class="razao" id="c_razao"></div>
+          <div class="end" id="c_endereco"></div>
+          <div class="end" id="c_municipio"></div>
+          <div class="end">Fone/Fax: <span id="c_fone"></span></div>
+        </div>
+        <div class="cab-danfe">
+          <div class="titulo">DANFE</div>
+          <div class="sub">Documento Auxiliar da Nota Fiscal Eletrônica</div>
+          <div class="tipo-box" id="c_tipo"></div>
+          <div class="numsserie">Nº <span id="c_numero"></span> &nbsp; Série <span id="c_serie"></span></div>
+          <div class="sub">Folha 1/1</div>
+        </div>
+        <div class="cab-bar">
+          <svg id="barcode"></svg>
+          <div class="consulta">Consulta de autenticidade no portal nacional da NF-e www.nfe.fazenda.gov.br, ou no site da Sefaz autorizadora</div>
+          <span class="lbl">Chave de acesso</span>
+          <div class="chave" id="c_chave"></div>
+        </div>
+      </div>
+
+      <!-- natureza -->
+      <table class="grid">
+        <tr><td><span class="lbl">Natureza da operação</span><div class="val" id="c_natureza"></div></td></tr>
+      </table>
+      <table class="grid">
+        <tr>
+          <td style="width:33%;"><span class="lbl">Inscrição Estadual</span><div class="val" id="c_ie"></div></td>
+          <td style="width:34%;"><span class="lbl">Inscrição Estadual Subst. Tribut.</span><div class="val" id="c_iest"></div></td>
+          <td style="width:33%;"><span class="lbl">CNPJ</span><div class="val" id="c_cnpj"></div></td>
+        </tr>
+      </table>
+
+      <!-- protocolo -->
+      <table class="grid">
+        <tr><td><span class="lbl">Protocolo de autorização de uso</span><div class="val" id="c_protocolo"></div></td></tr>
+      </table>
+
+      <!-- destinatário -->
+      <div class="sec-titulo">DESTINATÁRIO / REMETENTE</div>
+      <table class="grid">
+        <tr>
+          <td style="width:50%;"><span class="lbl">Nome/Razão social</span><div class="val" id="dd_nome"></div></td>
+          <td style="width:25%;"><span class="lbl">CNPJ/CPF</span><div class="val" id="dd_cnpj"></div></td>
+          <td style="width:25%;"><span class="lbl">Data da emissão</span><div class="val" id="dd_dataemissao"></div></td>
+        </tr>
+        <tr>
+          <td><span class="lbl">Endereço</span><div class="val" id="dd_endereco"></div></td>
+          <td><span class="lbl">Bairro/Distrito</span><div class="val" id="dd_bairro"></div></td>
+          <td><span class="lbl">Data saída/entrada</span><div class="val" id="dd_datasaida"></div></td>
+        </tr>
+        <tr>
+          <td><span class="lbl">Município</span><div class="val" id="dd_municipio"></div></td>
+          <td><span class="lbl">Fone/Fax &nbsp;|&nbsp; UF &nbsp;|&nbsp; Insc. Estadual</span><div class="val" id="dd_fone"></div></td>
+          <td><span class="lbl">Hora da saída</span><div class="val" id="dd_hora"></div></td>
+        </tr>
+      </table>
+
+      <!-- duplicatas -->
+      <div class="sec-titulo">FATURA / DUPLICATAS</div>
+      <table class="grid"><tr><td><div class="val" id="c_duplicatas" style="font-size:9px;"></div></td></tr></table>
+
+      <!-- impostos -->
+      <div class="sec-titulo">CÁLCULO DO IMPOSTO</div>
+      <table class="grid">
+        <tr>
+          <td><span class="lbl">Base cálc. ICMS</span><div class="val" id="v_baseicms"></div></td>
+          <td><span class="lbl">Valor ICMS</span><div class="val" id="v_valoricms"></div></td>
+          <td><span class="lbl">Base ICMS ST</span><div class="val" id="v_baseicmsst"></div></td>
+          <td><span class="lbl">Valor ICMS ST</span><div class="val" id="v_valoricmsst"></div></td>
+          <td><span class="lbl">Valor total dos produtos</span><div class="val" id="v_totalprodutos"></div></td>
+        </tr>
+        <tr>
+          <td><span class="lbl">Valor do frete</span><div class="val" id="v_frete"></div></td>
+          <td><span class="lbl">Valor do seguro</span><div class="val" id="v_seguro"></div></td>
+          <td><span class="lbl">Desconto</span><div class="val" id="v_desconto"></div></td>
+          <td><span class="lbl">Outras desp. acessórias</span><div class="val" id="v_outras"></div></td>
+          <td><span class="lbl">Valor total do IPI</span><div class="val" id="v_ipi"></div></td>
+        </tr>
+        <tr><td colspan="5"><span class="lbl">Valor total da nota</span><div class="val grande" id="v_totalnota"></div></td></tr>
+      </table>
+
+      <!-- transportador -->
+      <div class="sec-titulo">TRANSPORTADOR / VOLUMES TRANSPORTADOS</div>
+      <table class="grid">
+        <tr>
+          <td style="width:40%;"><span class="lbl">Nome/Razão social</span><div class="val" id="tt_nome"></div></td>
+          <td style="width:15%;"><span class="lbl">Frete por conta</span><div class="val" id="tt_frete"></div></td>
+          <td style="width:15%;"><span class="lbl">Placa</span><div class="val" id="tt_placa"></div></td>
+          <td style="width:10%;"><span class="lbl">UF</span><div class="val" id="tt_ufplaca"></div></td>
+          <td style="width:20%;"><span class="lbl">CNPJ/CPF</span><div class="val" id="tt_cnpj"></div></td>
+        </tr>
+        <tr>
+          <td colspan="2"><span class="lbl">Endereço</span><div class="val" id="tt_endereco"></div></td>
+          <td><span class="lbl">Município</span><div class="val" id="tt_municipio"></div></td>
+          <td><span class="lbl">UF</span><div class="val" id="tt_uf"></div></td>
+          <td><span class="lbl">Insc. Estadual</span><div class="val" id="tt_ie"></div></td>
+        </tr>
+        <tr>
+          <td><span class="lbl">Quantidade</span><div class="val" id="tt_qtd"></div></td>
+          <td><span class="lbl">Espécie</span><div class="val" id="tt_especie"></div></td>
+          <td><span class="lbl">Marca</span><div class="val" id="tt_marca"></div></td>
+          <td colspan="2"><span class="lbl">Numeração</span><div class="val" id="tt_numeracao"></div></td>
+        </tr>
+        <tr>
+          <td colspan="2"><span class="lbl">Peso bruto</span><div class="val" id="tt_pesobruto"></div></td>
+          <td colspan="3"><span class="lbl">Peso líquido</span><div class="val" id="tt_pesoliq"></div></td>
+        </tr>
+      </table>
+
+      <!-- produtos -->
+      <div class="sec-titulo">DADOS DO PRODUTO / SERVIÇOS</div>
+      <table class="grid" style="font-size:8px;">
+        <thead>
+          <tr>
+            <td style="width:8%;"><span class="lbl">Código</span></td>
+            <td style="width:24%;"><span class="lbl">Descrição</span></td>
+            <td style="width:7%;"><span class="lbl">NCM/SH</span></td>
+            <td style="width:5%;"><span class="lbl">CST</span></td>
+            <td style="width:6%;"><span class="lbl">CFOP</span></td>
+            <td style="width:5%;"><span class="lbl">Un.</span></td>
+            <td style="width:6%;"><span class="lbl">Quant.</span></td>
+            <td style="width:8%;"><span class="lbl">Vl. Unit.</span></td>
+            <td style="width:9%;"><span class="lbl">Vl. Total</span></td>
+            <td style="width:8%;"><span class="lbl">B.Cálc.ICMS</span></td>
+            <td style="width:7%;"><span class="lbl">Vl. ICMS</span></td>
+            <td style="width:7%;"><span class="lbl">Vl. IPI</span></td>
+          </tr>
+        </thead>
+        <tbody id="tabela-produtos"></tbody>
+      </table>
+
+      <!-- adicionais -->
+      <div class="sec-titulo">DADOS ADICIONAIS</div>
+      <table class="grid">
+        <tr>
+          <td style="width:70%;"><span class="lbl">Informações complementares</span><div class="val" id="ad_info" style="font-size:8.5px;"></div></td>
+          <td style="width:30%;"><span class="lbl">Reservado ao fisco</span><div class="val" id="ad_fisco" style="font-size:8.5px;"></div></td>
+        </tr>
+      </table>
+
+    </div>
+  </div>
+</div>
+
+<script>
+let produtos = [];
+let duplicatas = [];
+
+function fmtMoeda(v){
+  const n = parseFloat(String(v).replace(/\./g,'').replace(',','.')) || 0;
+  return n.toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function fmtData(iso){
+  if(!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return d && m && y ? `${d}/${m}/${y}` : iso;
+}
+function soDigitos(s){ return (s||'').replace(/\D/g,''); }
+function formatarChave(chave){
+  const d = soDigitos(chave).padEnd(44,'0').slice(0,44);
+  return d.match(/.{1,4}/g).join(' ');
+}
+function normalizarTexto(s){
+  return String(s||'').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+}
+
+// ---------- produtos dinâmicos ----------
+function addProduto(p){
+  p = p || {codigo:'', descricao:'', ncm:'', cst:'', cfop:'', unidade:'UN', quantidade:'1', valorUnit:'0,00', baseIcms:'0,00', valorIcms:'0,00', valorIpi:'0,00'};
+  produtos.push(p);
+  renderFormularioProdutos();
+  render();
+}
+function removeProduto(i){
+  produtos.splice(i,1);
+  renderFormularioProdutos();
+  render();
+}
+function renderFormularioProdutos(){
+  const box = document.getElementById('lista-produtos');
+  box.innerHTML = produtos.map((p,i)=>`
+    <div class="produto-item">
+      <div class="linha2">
+        <div class="campo-form"><label>Código</label><input value="${p.codigo}" oninput="produtos[${i}].codigo=this.value;render()"></div>
+        <div class="campo-form"><label>NCM/SH</label><input value="${p.ncm}" oninput="produtos[${i}].ncm=this.value;render()"></div>
+      </div>
+      <div class="campo-form"><label>Descrição</label><input value="${p.descricao}" oninput="produtos[${i}].descricao=this.value;render()"></div>
+      <div class="linha3">
+        <div class="campo-form"><label>CST</label><input value="${p.cst}" oninput="produtos[${i}].cst=this.value;render()"></div>
+        <div class="campo-form"><label>CFOP</label><input value="${p.cfop}" oninput="produtos[${i}].cfop=this.value;render()"></div>
+        <div class="campo-form"><label>Unidade</label><input value="${p.unidade}" oninput="produtos[${i}].unidade=this.value;render()"></div>
+      </div>
+      <div class="linha3">
+        <div class="campo-form"><label>Quantidade</label><input value="${p.quantidade}" oninput="produtos[${i}].quantidade=this.value;render()"></div>
+        <div class="campo-form"><label>Vl. Unitário</label><input value="${p.valorUnit}" oninput="produtos[${i}].valorUnit=this.value;render()"></div>
+        <div class="campo-form"><label>Vl. ICMS</label><input value="${p.valorIcms}" oninput="produtos[${i}].valorIcms=this.value;render()"></div>
+      </div>
+      <button class="btn pequeno vermelho" onclick="removeProduto(${i})">Remover produto</button>
+    </div>
+  `).join('') || '<p style="font-size:11px;color:#888;">Nenhum produto adicionado.</p>';
+}
+
+// ---------- duplicatas dinâmicas ----------
+function addDuplicata(d){
+  d = d || {numero:'001', valor:'0,00', vencimento:''};
+  duplicatas.push(d);
+  renderFormularioDuplicatas();
+  render();
+}
+function removeDuplicata(i){
+  duplicatas.splice(i,1);
+  renderFormularioDuplicatas();
+  render();
+}
+function renderFormularioDuplicatas(){
+  const box = document.getElementById('lista-duplicatas');
+  box.innerHTML = duplicatas.map((d,i)=>`
+    <div class="dup-item">
+      <div class="linha3">
+        <div class="campo-form"><label>Número</label><input value="${d.numero}" oninput="duplicatas[${i}].numero=this.value;render()"></div>
+        <div class="campo-form"><label>Vencimento</label><input type="date" value="${d.vencimento}" oninput="duplicatas[${i}].vencimento=this.value;render()"></div>
+        <div class="campo-form"><label>Valor</label><input value="${d.valor}" oninput="duplicatas[${i}].valor=this.value;render()"></div>
+      </div>
+      <button class="btn pequeno vermelho" onclick="removeDuplicata(${i})">Remover</button>
+    </div>
+  `).join('') || '<p style="font-size:11px;color:#888;">Nenhuma duplicata.</p>';
+}
+
+function recalcularTotais(){
+  let totalProdutos = 0, baseIcms = 0, valorIcms = 0, valorIpi = 0;
+  produtos.forEach(p=>{
+    const qtd = parseFloat(String(p.quantidade).replace(',','.'))||0;
+    const vUnit = parseFloat(String(p.valorUnit).replace(/\./g,'').replace(',','.'))||0;
+    totalProdutos += qtd*vUnit;
+    baseIcms += parseFloat(String(p.baseIcms||0).replace(/\./g,'').replace(',','.'))||0;
+    valorIcms += parseFloat(String(p.valorIcms||0).replace(/\./g,'').replace(',','.'))||0;
+    valorIpi += parseFloat(String(p.valorIpi||0).replace(/\./g,'').replace(',','.'))||0;
+  });
+  document.getElementById('i_totalprodutos').value = totalProdutos.toLocaleString('pt-BR',{minimumFractionDigits:2});
+  document.getElementById('i_baseicms').value = baseIcms.toLocaleString('pt-BR',{minimumFractionDigits:2});
+  document.getElementById('i_valoricms').value = valorIcms.toLocaleString('pt-BR',{minimumFractionDigits:2});
+  document.getElementById('i_ipi').value = valorIpi.toLocaleString('pt-BR',{minimumFractionDigits:2});
+
+  const frete = parseFloat(document.getElementById('i_frete').value.replace(/\./g,'').replace(',','.'))||0;
+  const seguro = parseFloat(document.getElementById('i_seguro').value.replace(/\./g,'').replace(',','.'))||0;
+  const desconto = parseFloat(document.getElementById('i_desconto').value.replace(/\./g,'').replace(',','.'))||0;
+  const outras = parseFloat(document.getElementById('i_outras').value.replace(/\./g,'').replace(',','.'))||0;
+  const totalNota = totalProdutos + frete + seguro + outras + valorIpi - desconto;
+  document.getElementById('i_totalnota').value = totalNota.toLocaleString('pt-BR',{minimumFractionDigits:2});
+  render();
+}
+
+// ---------- render principal ----------
+function g(id){ return document.getElementById(id).value; }
+function set(id, txt){ document.getElementById(id).textContent = txt || ''; }
+
+function render(){
+  set('r_emit', g('e_razao'));
+  set('r_emissao', fmtData(g('n_dataemissao')));
+  set('r_total', fmtMoeda(g('i_totalnota')));
+  set('r_numserie', `Nº ${g('n_numero')}  Série ${g('n_serie')}`);
+
+  set('c_razao', g('e_razao'));
+  set('c_endereco', `${g('e_endereco')} - ${g('e_bairro')} - CEP ${g('e_cep')}`);
+  set('c_municipio', `${g('e_municipio')}/${g('e_uf')}`);
+  set('c_fone', g('e_fone'));
+
+  const tipo = g('n_tipo');
+  set('c_tipo', tipo === '0' ? '0 - ENTRADA' : '1 - SAÍDA');
+  set('c_numero', g('n_numero'));
+  set('c_serie', g('n_serie'));
+
+  const chave = soDigitos(g('n_chave'));
+  set('c_chave', formatarChave(chave));
+  try{
+    JsBarcode('#barcode', chave.padEnd(44,'0').slice(0,44), {format:'CODE128', displayValue:false, height:32, margin:0});
+  }catch(e){}
+
+  set('c_natureza', g('n_natureza'));
+  set('c_ie', g('e_ie'));
+  set('c_iest', g('e_iest'));
+  set('c_cnpj', g('e_cnpj'));
+  set('c_protocolo', g('n_protocolo'));
+
+  set('dd_nome', g('d_nome'));
+  set('dd_cnpj', g('d_cnpj'));
+  set('dd_dataemissao', fmtData(g('n_dataemissao')));
+  set('dd_endereco', g('d_endereco'));
+  set('dd_bairro', g('d_bairro'));
+  set('dd_datasaida', fmtData(g('n_datasaida')));
+  set('dd_municipio', `${g('d_municipio')}/${g('d_uf')}`);
+  set('dd_fone', `${g('d_fone')}  |  ${g('d_uf')}  |  ${g('d_ie')}`);
+  set('dd_hora', g('d_hora'));
+
+  const dupTxt = duplicatas.map(d=>`Dup. ${d.numero} — Venc.: ${fmtData(d.vencimento)} — Vl.: R$ ${fmtMoeda(d.valor)}`).join('   |   ');
+  set('c_duplicatas', dupTxt || '—');
+
+  set('v_baseicms', fmtMoeda(g('i_baseicms')));
+  set('v_valoricms', fmtMoeda(g('i_valoricms')));
+  set('v_baseicmsst', fmtMoeda(g('i_baseicmsst')));
+  set('v_valoricmsst', fmtMoeda(g('i_valoricmsst')));
+  set('v_totalprodutos', fmtMoeda(g('i_totalprodutos')));
+  set('v_frete', fmtMoeda(g('i_frete')));
+  set('v_seguro', fmtMoeda(g('i_seguro')));
+  set('v_desconto', fmtMoeda(g('i_desconto')));
+  set('v_outras', fmtMoeda(g('i_outras')));
+  set('v_ipi', fmtMoeda(g('i_ipi')));
+  set('v_totalnota', 'R$ ' + fmtMoeda(g('i_totalnota')));
+
+  set('tt_nome', g('t_nome'));
+  const freteMap = {'0':'0 - Emitente','1':'1 - Destinatário','9':'9 - Sem frete'};
+  set('tt_frete', freteMap[g('t_frete')] || '');
+  set('tt_placa', g('t_placa'));
+  set('tt_ufplaca', g('t_ufplaca'));
+  set('tt_cnpj', g('t_cnpj'));
+  set('tt_endereco', g('t_endereco'));
+  set('tt_municipio', g('t_municipio'));
+  set('tt_uf', g('t_uf'));
+  set('tt_ie', g('t_ie'));
+  set('tt_qtd', g('t_qtd'));
+  set('tt_especie', g('t_especie'));
+  set('tt_marca', g('t_marca'));
+  set('tt_numeracao', g('t_numeracao'));
+  set('tt_pesobruto', g('t_pesobruto'));
+  set('tt_pesoliq', g('t_pesoliq'));
+
+  const tbody = document.getElementById('tabela-produtos');
+  tbody.innerHTML = produtos.map(p=>{
+    const qtd = parseFloat(String(p.quantidade).replace(',','.'))||0;
+    const vUnit = parseFloat(String(p.valorUnit).replace(/\./g,'').replace(',','.'))||0;
+    const total = qtd*vUnit;
+    return `<tr>
+      <td>${p.codigo}</td>
+      <td>${p.descricao}</td>
+      <td>${p.ncm}</td>
+      <td>${p.cst}</td>
+      <td>${p.cfop}</td>
+      <td>${p.unidade}</td>
+      <td>${p.quantidade}</td>
+      <td>${fmtMoeda(p.valorUnit)}</td>
+      <td>${fmtMoeda(total)}</td>
+      <td>${fmtMoeda(p.baseIcms||0)}</td>
+      <td>${fmtMoeda(p.valorIcms||0)}</td>
+      <td>${fmtMoeda(p.valorIpi||0)}</td>
+    </tr>`;
+  }).join('');
+
+  set('ad_info', g('a_info'));
+  set('ad_fisco', g('a_fisco'));
+}
+
+// ---------- importar XML de NFe ----------
+function handleXml(ev){
+  const file = ev.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try{
+      const xml = new DOMParser().parseFromString(e.target.result, 'text/xml');
+      const q = tag => { const el = xml.getElementsByTagName(tag)[0]; return el ? el.textContent : ''; };
+
+      document.getElementById('e_razao').value = q('xNome') || document.getElementById('e_razao').value;
+      const emit = xml.getElementsByTagName('emit')[0];
+      if(emit){
+        document.getElementById('e_razao').value = emit.getElementsByTagName('xNome')[0]?.textContent || '';
+        document.getElementById('e_cnpj').value = emit.getElementsByTagName('CNPJ')[0]?.textContent || '';
+        document.getElementById('e_ie').value = emit.getElementsByTagName('IE')[0]?.textContent || '';
+        const end = emit.getElementsByTagName('enderEmit')[0];
+        if(end){
+          document.getElementById('e_endereco').value = `${end.getElementsByTagName('xLgr')[0]?.textContent||''}, ${end.getElementsByTagName('nro')[0]?.textContent||''}`;
+          document.getElementById('e_bairro').value = end.getElementsByTagName('xBairro')[0]?.textContent || '';
+          document.getElementById('e_cep').value = end.getElementsByTagName('CEP')[0]?.textContent || '';
+          document.getElementById('e_municipio').value = end.getElementsByTagName('xMun')[0]?.textContent || '';
+          document.getElementById('e_uf').value = end.getElementsByTagName('UF')[0]?.textContent || '';
+          document.getElementById('e_fone').value = end.getElementsByTagName('fone')[0]?.textContent || '';
+        }
+      }
+      const dest = xml.getElementsByTagName('dest')[0];
+      if(dest){
+        document.getElementById('d_nome').value = dest.getElementsByTagName('xNome')[0]?.textContent || '';
+        document.getElementById('d_cnpj').value = dest.getElementsByTagName('CNPJ')[0]?.textContent || dest.getElementsByTagName('CPF')[0]?.textContent || '';
+        document.getElementById('d_ie').value = dest.getElementsByTagName('IE')[0]?.textContent || '';
+        const end = dest.getElementsByTagName('enderDest')[0];
+        if(end){
+          document.getElementById('d_endereco').value = `${end.getElementsByTagName('xLgr')[0]?.textContent||''}, ${end.getElementsByTagName('nro')[0]?.textContent||''}`;
+          document.getElementById('d_bairro').value = end.getElementsByTagName('xBairro')[0]?.textContent || '';
+          document.getElementById('d_cep').value = end.getElementsByTagName('CEP')[0]?.textContent || '';
+          document.getElementById('d_municipio').value = end.getElementsByTagName('xMun')[0]?.textContent || '';
+          document.getElementById('d_uf').value = end.getElementsByTagName('UF')[0]?.textContent || '';
+          document.getElementById('d_fone').value = end.getElementsByTagName('fone')[0]?.textContent || '';
+        }
+      }
+      const ide = xml.getElementsByTagName('ide')[0];
+      if(ide){
+        document.getElementById('n_natureza').value = ide.getElementsByTagName('natOp')[0]?.textContent || '';
+        document.getElementById('n_numero').value = ide.getElementsByTagName('nNF')[0]?.textContent || '';
+        document.getElementById('n_serie').value = ide.getElementsByTagName('serie')[0]?.textContent || '';
+        document.getElementById('n_tipo').value = ide.getElementsByTagName('tpNF')[0]?.textContent || '1';
+        const dhEmi = ide.getElementsByTagName('dhEmi')[0]?.textContent || '';
+        if(dhEmi) document.getElementById('n_dataemissao').value = dhEmi.slice(0,10);
+        const dhSaiEnt = ide.getElementsByTagName('dhSaiEnt')[0]?.textContent || '';
+        if(dhSaiEnt) document.getElementById('n_datasaida').value = dhSaiEnt.slice(0,10);
+      }
+      const infNFe = xml.getElementsByTagName('infNFe')[0];
+      if(infNFe){
+        const id = infNFe.getAttribute('Id') || '';
+        document.getElementById('n_chave').value = id.replace('NFe','');
+      }
+      const protNFe = xml.getElementsByTagName('protNFe')[0];
+      if(protNFe){
+        const nProt = protNFe.getElementsByTagName('nProt')[0]?.textContent || '';
+        const dhRecbto = protNFe.getElementsByTagName('dhRecbto')[0]?.textContent || '';
+        document.getElementById('n_protocolo').value = `${nProt} - ${dhRecbto}`;
+      }
+      const total = xml.getElementsByTagName('ICMSTot')[0];
+      if(total){
+        const campo = t => total.getElementsByTagName(t)[0]?.textContent;
+        document.getElementById('i_baseicms').value = parseFloat(campo('vBC')||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
+        document.getElementById('i_valoricms').value = parseFloat(campo('vICMS')||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
+        document.getElementById('i_baseicmsst').value = parseFloat(campo('vBCST')||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
+        document.getElementById('i_valoricmsst').value = parseFloat(campo('vST')||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
+        document.getElementById('i_totalprodutos').value = parseFloat(campo('vProd')||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
+        document.getElementById('i_frete').value = parseFloat(campo('vFrete')||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
+        document.getElementById('i_seguro').value = parseFloat(campo('vSeg')||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
+        document.getElementById('i_desconto').value = parseFloat(campo('vDesc')||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
+        document.getElementById('i_outras').value = parseFloat(campo('vOutro')||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
+        document.getElementById('i_ipi').value = parseFloat(campo('vIPI')||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
+        document.getElementById('i_totalnota').value = parseFloat(campo('vNF')||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
+      }
+      const transp = xml.getElementsByTagName('transporta')[0];
+      if(transp){
+        document.getElementById('t_nome').value = transp.getElementsByTagName('xNome')[0]?.textContent || '';
+        document.getElementById('t_cnpj').value = transp.getElementsByTagName('CNPJ')[0]?.textContent || '';
+        document.getElementById('t_ie').value = transp.getElementsByTagName('IE')[0]?.textContent || '';
+        document.getElementById('t_endereco').value = transp.getElementsByTagName('xEnder')[0]?.textContent || '';
+        document.getElementById('t_municipio').value = transp.getElementsByTagName('xMun')[0]?.textContent || '';
+        document.getElementById('t_uf').value = transp.getElementsByTagName('UF')[0]?.textContent || '';
+      }
+      const modFrete = xml.getElementsByTagName('modFrete')[0]?.textContent;
+      if(modFrete) document.getElementById('t_frete').value = modFrete;
+
+      produtos = [];
+      Array.from(xml.getElementsByTagName('det')).forEach(det=>{
+        const prod = det.getElementsByTagName('prod')[0];
+        const imposto = det.getElementsByTagName('imposto')[0];
+        let baseIcms='0', valorIcms='0', valorIpi='0';
+        if(imposto){
+          const icms = imposto.getElementsByTagName('ICMS')[0];
+          if(icms){
+            baseIcms = icms.getElementsByTagName('vBC')[0]?.textContent || '0';
+            valorIcms = icms.getElementsByTagName('vICMS')[0]?.textContent || '0';
+          }
+          const ipi = imposto.getElementsByTagName('IPI')[0];
+          if(ipi){
+            valorIpi = ipi.getElementsByTagName('vIPI')[0]?.textContent || '0';
+          }
+        }
+        produtos.push({
+          codigo: prod.getElementsByTagName('cProd')[0]?.textContent || '',
+          descricao: prod.getElementsByTagName('xProd')[0]?.textContent || '',
+          ncm: prod.getElementsByTagName('NCM')[0]?.textContent || '',
+          cst: prod.getElementsByTagName('CST')[0]?.textContent || prod.getElementsByTagName('CSOSN')[0]?.textContent || '',
+          cfop: prod.getElementsByTagName('CFOP')[0]?.textContent || '',
+          unidade: prod.getElementsByTagName('uCom')[0]?.textContent || '',
+          quantidade: prod.getElementsByTagName('qCom')[0]?.textContent || '',
+          valorUnit: parseFloat(prod.getElementsByTagName('vUnCom')[0]?.textContent || 0).toLocaleString('pt-BR',{minimumFractionDigits:2}),
+          baseIcms: parseFloat(baseIcms).toLocaleString('pt-BR',{minimumFractionDigits:2}),
+          valorIcms: parseFloat(valorIcms).toLocaleString('pt-BR',{minimumFractionDigits:2}),
+          valorIpi: parseFloat(valorIpi).toLocaleString('pt-BR',{minimumFractionDigits:2}),
+        });
+      });
+      renderFormularioProdutos();
+
+      duplicatas = [];
+      Array.from(xml.getElementsByTagName('dup')).forEach(dup=>{
+        duplicatas.push({
+          numero: dup.getElementsByTagName('nDup')[0]?.textContent || '',
+          vencimento: dup.getElementsByTagName('dVenc')[0]?.textContent || '',
+          valor: parseFloat(dup.getElementsByTagName('vDup')[0]?.textContent || 0).toLocaleString('pt-BR',{minimumFractionDigits:2}),
+        });
+      });
+      renderFormularioDuplicatas();
+
+      render();
+      alert('XML importado! Confira os dados antes de baixar o PDF.');
+    }catch(err){
+      alert('Não foi possível interpretar este XML como uma NFe padrão. Preencha manualmente.');
+      console.error(err);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ==========================================================================
+// ---------- IMPORTAÇÃO PADRONIZADA VIA MODELO EXCEL (recomendado) ----------
+// ==========================================================================
+// Todo campo simples do formulário tem um rótulo em português fixo. O modelo
+// baixado usa exatamente esses rótulos na coluna "Campo" da aba "Dados", e a
+// leitura é feita por correspondência exata de rótulo -> id do campo (não é
+// heurística: é leitura tabular determinística).
+const CAMPOS_MODELO = [
+  ['Razão Social Emitente','e_razao'],
+  ['Endereço Emitente','e_endereco'],
+  ['Bairro Emitente','e_bairro'],
+  ['CEP Emitente','e_cep'],
+  ['Fone/Fax Emitente','e_fone'],
+  ['Município Emitente','e_municipio'],
+  ['UF Emitente','e_uf'],
+  ['CNPJ Emitente','e_cnpj'],
+  ['Inscrição Estadual Emitente','e_ie'],
+  ['IE Substituto Tributário Emitente','e_iest'],
+
+  ['Natureza da Operação','n_natureza'],
+  ['Número da Nota','n_numero'],
+  ['Série','n_serie'],
+  ['Tipo (0-Entrada ou 1-Saída)','n_tipo'],
+  ['Data de Emissão (AAAA-MM-DD)','n_dataemissao'],
+  ['Data de Saída/Entrada (AAAA-MM-DD)','n_datasaida'],
+  ['Chave de Acesso (44 dígitos)','n_chave'],
+  ['Protocolo de Autorização','n_protocolo'],
+
+  ['Nome/Razão Social Destinatário','d_nome'],
+  ['CNPJ/CPF Destinatário','d_cnpj'],
+  ['Inscrição Estadual Destinatário','d_ie'],
+  ['Endereço Destinatário','d_endereco'],
+  ['Bairro Destinatário','d_bairro'],
+  ['CEP Destinatário','d_cep'],
+  ['Fone/Fax Destinatário','d_fone'],
+  ['Município Destinatário','d_municipio'],
+  ['UF Destinatário','d_uf'],
+  ['Hora da Saída (HH:MM)','d_hora'],
+
+  ['Nome/Razão Social Transportador','t_nome'],
+  ['Frete por Conta (0, 1 ou 9)','t_frete'],
+  ['Placa do Veículo','t_placa'],
+  ['UF da Placa','t_ufplaca'],
+  ['CNPJ/CPF Transportador','t_cnpj'],
+  ['Inscrição Estadual Transportador','t_ie'],
+  ['Endereço Transportador','t_endereco'],
+  ['Município Transportador','t_municipio'],
+  ['UF Transportador','t_uf'],
+  ['Quantidade de Volumes','t_qtd'],
+  ['Espécie dos Volumes','t_especie'],
+  ['Marca dos Volumes','t_marca'],
+  ['Numeração dos Volumes','t_numeracao'],
+  ['Peso Bruto','t_pesobruto'],
+  ['Peso Líquido','t_pesoliq'],
+
+  ['Base de Cálculo ICMS','i_baseicms'],
+  ['Valor do ICMS','i_valoricms'],
+  ['Base de Cálculo ICMS ST','i_baseicmsst'],
+  ['Valor do ICMS ST','i_valoricmsst'],
+  ['Total dos Produtos','i_totalprodutos'],
+  ['Valor do Frete','i_frete'],
+  ['Valor do Seguro','i_seguro'],
+  ['Desconto','i_desconto'],
+  ['Outras Despesas Acessórias','i_outras'],
+  ['Total do IPI','i_ipi'],
+  ['Total da Nota','i_totalnota'],
+
+  ['Informações Complementares','a_info'],
+  ['Reservado ao Fisco','a_fisco'],
+];
+
+const PRODUTOS_HEADER = ['Código','Descrição','NCM/SH','CST/CSOSN','CFOP','Unidade','Quantidade','Valor Unitário','Base ICMS','Valor ICMS','Valor IPI'];
+const DUPLICATAS_HEADER = ['Número','Vencimento (AAAA-MM-DD)','Valor'];
+
+function baixarModeloExcel(){
+  const wb = XLSX.utils.book_new();
+
+  const linhasDados = [['Campo','Valor'], ...CAMPOS_MODELO.map(([label])=>[label,''])];
+  const wsDados = XLSX.utils.aoa_to_sheet(linhasDados);
+  wsDados['!cols'] = [{wch:38},{wch:32}];
+  XLSX.utils.book_append_sheet(wb, wsDados, 'Dados');
+
+  const wsProdutos = XLSX.utils.aoa_to_sheet([
+    PRODUTOS_HEADER,
+    ['0001','PRODUTO EXEMPLO','00000000','000','5102','UN','1','100,00','100,00','18,00','0,00'],
+  ]);
+  wsProdutos['!cols'] = PRODUTOS_HEADER.map(()=>({wch:16}));
+  XLSX.utils.book_append_sheet(wb, wsProdutos, 'Produtos');
+
+  const wsDuplicatas = XLSX.utils.aoa_to_sheet([
+    DUPLICATAS_HEADER,
+    ['001','','100,00'],
+  ]);
+  wsDuplicatas['!cols'] = DUPLICATAS_HEADER.map(()=>({wch:20}));
+  XLSX.utils.book_append_sheet(wb, wsDuplicatas, 'Duplicatas');
+
+  const instrucoes = [
+    ['Como preencher este modelo'],
+    ['1. Não altere os nomes das abas (Dados, Produtos, Duplicatas) nem os textos da coluna A / cabeçalhos.'],
+    ['2. Na aba "Dados", preencha somente a coluna B (Valor) ao lado de cada campo.'],
+    ['3. Na aba "Produtos", cada linha é um item da nota. Adicione quantas linhas precisar.'],
+    ['4. Na aba "Duplicatas", cada linha é uma parcela/duplicata. Deixe em branco se não houver.'],
+    ['5. Datas devem estar no formato AAAA-MM-DD (ex.: 2026-07-17).'],
+    ['6. Valores monetários no formato brasileiro (ex.: 1.234,56).'],
+    ['7. Salve o arquivo e envie-o de volta pelo campo "Modelo Excel" no site.'],
+  ];
+  const wsInstrucoes = XLSX.utils.aoa_to_sheet(instrucoes);
+  wsInstrucoes['!cols'] = [{wch:90}];
+  XLSX.utils.book_append_sheet(wb, wsInstrucoes, 'Instruções');
+
+  XLSX.writeFile(wb, 'modelo-importacao-danfe.xlsx');
+}
+
+function normalizarDataPlanilha(v){
+  if(v === undefined || v === null || v === '') return '';
+  if(v instanceof Date){
+    const y = v.getFullYear(), m = String(v.getMonth()+1).padStart(2,'0'), d = String(v.getDate()).padStart(2,'0');
+    return `${y}-${m}-${d}`;
+  }
+  const s = String(v).trim();
+  const iso = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(iso) return `${iso[1]}-${iso[2].padStart(2,'0')}-${iso[3].padStart(2,'0')}`;
+  const br = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if(br) return `${br[3]}-${br[2].padStart(2,'0')}-${br[1].padStart(2,'0')}`;
+  return '';
+}
+
+async function handleExcel(ev){
+  const file = ev.target.files[0];
+  const status = document.getElementById('excel-status');
+  if(!file) return;
+  try{
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, {type:'array', cellDates:true});
+    let camposLidos = 0;
+
+    const wsDados = wb.Sheets['Dados'];
+    if(wsDados){
+      const mapaLabel = {};
+      CAMPOS_MODELO.forEach(([label,id])=>{ mapaLabel[normalizarTexto(label)] = id; });
+      const linhas = XLSX.utils.sheet_to_json(wsDados, {header:1, defval:''});
+      linhas.slice(1).forEach(linha=>{
+        const label = normalizarTexto(linha[0]);
+        const valor = linha[1];
+        const id = mapaLabel[label];
+        if(id && valor !== '' && valor !== undefined && valor !== null){
+          const el = document.getElementById(id);
+          if(el){ el.value = String(valor); camposLidos++; }
+        }
+      });
+    }
+
+    const wsProdutos = wb.Sheets['Produtos'];
+    if(wsProdutos){
+      const linhas = XLSX.utils.sheet_to_json(wsProdutos, {defval:''});
+      const validas = linhas.filter(l => l['Código'] || l['Descrição']);
+      if(validas.length){
+        produtos = validas.map(l=>({
+          codigo: String(l['Código']||''),
+          descricao: String(l['Descrição']||''),
+          ncm: String(l['NCM/SH']||''),
+          cst: String(l['CST/CSOSN']||''),
+          cfop: String(l['CFOP']||''),
+          unidade: String(l['Unidade']||''),
+          quantidade: String(l['Quantidade']||''),
+          valorUnit: String(l['Valor Unitário']||'0,00'),
+          baseIcms: String(l['Base ICMS']||'0,00'),
+          valorIcms: String(l['Valor ICMS']||'0,00'),
+          valorIpi: String(l['Valor IPI']||'0,00'),
+        }));
+        renderFormularioProdutos();
+      }
+    }
+
+    const wsDuplicatas = wb.Sheets['Duplicatas'];
+    if(wsDuplicatas){
+      const linhas = XLSX.utils.sheet_to_json(wsDuplicatas, {defval:''});
+      const validas = linhas.filter(l => l['Número'] || l['Valor']);
+      if(validas.length){
+        duplicatas = validas.map(l=>({
+          numero: String(l['Número']||''),
+          vencimento: normalizarDataPlanilha(l['Vencimento (AAAA-MM-DD)']),
+          valor: String(l['Valor']||'0,00'),
+        }));
+        renderFormularioDuplicatas();
+      }
+    }
+
+    if(camposLidos === 0 && !wsProdutos && !wsDuplicatas){
+      throw new Error('Nenhuma aba reconhecida (Dados/Produtos/Duplicatas).');
+    }
+
+    recalcularTotais();
+    render();
+    status.innerHTML = `<div class="nota-heuristica sucesso">✅ Planilha importada: ${camposLidos} campo(s) lido(s) com precisão a partir do modelo.</div>`;
+  }catch(err){
+    console.error(err);
+    status.innerHTML = `<div class="nota-heuristica">⚠ Não foi possível ler esta planilha. Baixe o modelo, preencha sem renomear abas/colunas e tente novamente.</div>`;
+  }
+}
+
+// ---------- importar PDF / DOCX / TXT (heurístico, best-effort) ----------
+if(window['pdfjsLib']){
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+async function handleDoc(ev){
+  const file = ev.target.files[0];
+  const status = document.getElementById('doc-status');
+  if(!file) return;
+  let texto = '';
+  try{
+    if(file.name.toLowerCase().endsWith('.pdf')){
+      const buf = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({data:buf}).promise;
+      for(let i=1;i<=pdf.numPages;i++){
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        texto += content.items.map(it=>it.str).join(' ') + '\n';
+      }
+    } else if(file.name.toLowerCase().endsWith('.docx')){
+      const buf = await file.arrayBuffer();
+      const zip = await JSZip.loadAsync(buf);
+      const doc = await zip.file('word/document.xml').async('string');
+      texto = doc.replace(/<[^>]+>/g,' ');
+    } else {
+      texto = await file.text();
+    }
+  }catch(err){
+    status.innerHTML = '<div class="nota-heuristica">⚠ Não foi possível ler este arquivo automaticamente. Preencha os campos manualmente ou use o modelo Excel.</div>';
+    console.error(err);
+    return;
+  }
+
+  const camposEncontrados = aplicarHeuristicas(texto);
+  status.innerHTML = `<div class="nota-heuristica">⚠ Extração automática (best-effort): ${camposEncontrados} campo(s) reconhecido(s). Revise TODOS os campos — a leitura de PDF/Word não é estruturada como o modelo Excel. Para garantia total, use o modelo Excel.</div>`;
+}
+
+function aplicarHeuristicas(texto){
+  let encontrados = 0;
+  const marcar = achou => { if(achou) encontrados++; };
+
+  const chave = texto.match(/\b(\d[\s.]?){44}\b/);
+  marcar(!!chave);
+  if(chave) document.getElementById('n_chave').value = soDigitos(chave[0]);
+
+  const cnpjs = texto.match(/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}/g);
+  if(cnpjs && cnpjs[0]){ document.getElementById('e_cnpj').value = cnpjs[0]; encontrados++; }
+  if(cnpjs && cnpjs[1]){ document.getElementById('d_cnpj').value = cnpjs[1]; encontrados++; }
+
+  const ies = texto.match(/Inscri[çc][ãa]o\s+Estadual\s*[:\-]?\s*([\d.\-\/]{6,20})/gi);
+  if(ies && ies[0]){
+    const v = ies[0].replace(/Inscri[çc][ãa]o\s+Estadual\s*[:\-]?\s*/i,'').trim();
+    if(v){ document.getElementById('e_ie').value = v; encontrados++; }
+  }
+
+  const numeroNota = texto.match(/N[º°o]\.?\s*[:\-]?\s*(\d{1,9})/i);
+  marcar(!!numeroNota);
+  if(numeroNota) document.getElementById('n_numero').value = numeroNota[1];
+
+  const serie = texto.match(/S[ée]rie\s*[:\-]?\s*(\d{1,3})/i);
+  marcar(!!serie);
+  if(serie) document.getElementById('n_serie').value = serie[1];
+
+  const cep = texto.match(/\b\d{5}-?\d{3}\b/);
+  marcar(!!cep);
+  if(cep) document.getElementById('e_cep').value = cep[0];
+
+  const telefone = texto.match(/\(?\d{2}\)?\s?\d{4,5}-?\d{4}/);
+  marcar(!!telefone);
+  if(telefone) document.getElementById('e_fone').value = telefone[0];
+
+  const municipioUf = texto.match(/([A-ZÀ-Ú][A-ZÀ-Ú \-]{2,40})\s*[\/\-]\s*([A-Z]{2})\b/);
+  if(municipioUf){
+    document.getElementById('e_municipio').value = municipioUf[1].trim();
+    document.getElementById('e_uf').value = municipioUf[2];
+    encontrados += 2;
+  }
+
+  const valorTotal = texto.match(/(?:valor total da nota|total da nota|valor total)\D{0,10}(\d{1,3}(?:\.\d{3})*,\d{2})/i);
+  marcar(!!valorTotal);
+  if(valorTotal) document.getElementById('i_totalnota').value = valorTotal[1];
+
+  const data = texto.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  marcar(!!data);
+  if(data) document.getElementById('n_dataemissao').value = `${data[3]}-${data[2]}-${data[1]}`;
+
+  const natOp = texto.match(/natureza da opera[çc][ãa]o\s*[:\-]?\s*([A-ZÀ-Ú \-]{3,60})/i);
+  marcar(!!natOp);
+  if(natOp) document.getElementById('n_natureza').value = natOp[1].trim();
+
+  const protocolo = texto.match(/protocolo(?: de autoriza[çc][ãa]o)?\s*[:\-]?\s*(\d{9,20}\s*-?\s*\d{2}\/\d{2}\/\d{4}[^\n]{0,20})/i);
+  marcar(!!protocolo);
+  if(protocolo) document.getElementById('n_protocolo').value = protocolo[1].trim();
+
+  render();
+  return encontrados;
+}
+
+// ---------- PDF ----------
+function baixarPDF(){
+  const el = document.getElementById('danfe-page');
+  html2canvas(el, {scale:2, useCORS:true}).then(canvas=>{
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p','mm','a4');
+    const imgData = canvas.toDataURL('image/png');
+    const pageWidth = 210, pageHeight = 297;
+    const imgWidth = pageWidth;
+    const imgHeight = canvas.height * imgWidth / canvas.width;
+    let heightLeft = imgHeight;
+    let position = 0;
+    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+    while(heightLeft > 0){
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+    pdf.save(`ESPELHO-DANFE-${document.getElementById('n_numero').value || 'modelo'}-SEM-VALOR-FISCAL.pdf`);
+  });
+}
+
+function limparTudo(){
+  if(!confirm('Limpar todos os campos?')) return;
+  document.querySelectorAll('.painel input[type=text], .painel input:not([type]), .painel input[type=date], .painel input[type=time]').forEach(i=>i.value='');
+  produtos = [];
+  duplicatas = [];
+  renderFormularioProdutos();
+  renderFormularioDuplicatas();
+  render();
+}
+
+// ---------- inicialização ----------
+addProduto({codigo:'0001', descricao:'PRODUTO MODELO', ncm:'00000000', cst:'000', cfop:'5102', unidade:'UN', quantidade:'1', valorUnit:'100,00', baseIcms:'100,00', valorIcms:'18,00', valorIpi:'0,00'});
+addDuplicata({numero:'001', valor:'100,00', vencimento:''});
+recalcularTotais();
+render();
+</script>
+</body>
+</html>
