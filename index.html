@@ -10,6 +10,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{
     --azul:#1d4d8f;
@@ -285,7 +286,7 @@
       <div style="margin:8px 0;">
         <button class="btn pequeno verde" type="button" onclick="baixarModeloExcel()">⬇ Baixar modelo Excel</button>
       </div>
-      <input type="file" id="input-excel" accept=".xlsx,.xls" onchange="handleExcel(event)">
+      <input type="file" id="input-excel" accept=".xlsx" onchange="handleExcel(event)">
       <div id="excel-status"></div>
     </div>
 
@@ -596,6 +597,10 @@
 <script>
 let produtos = [];
 let duplicatas = [];
+// Rastreiam se o usuário já digitou produtos/duplicatas à mão, para a importação
+// do Excel só pedir confirmação antes de substituir dados reais (nunca a linha padrão inicial).
+let produtosEditadosManualmente = false;
+let duplicatasEditadasManualmente = false;
 
 function fmtMoeda(v){
   const n = parseFloat(String(v).replace(/\./g,'').replace(',','.')) || 0;
@@ -616,35 +621,39 @@ function normalizarTexto(s){
 }
 
 // ---------- produtos dinâmicos ----------
-function addProduto(p){
+function addProduto(p, manual){
+  manual = manual === undefined ? true : manual;
   p = p || {codigo:'', descricao:'', ncm:'', cst:'', cfop:'', unidade:'UN', quantidade:'1', valorUnit:'0,00', baseIcms:'0,00', valorIcms:'0,00', valorIpi:'0,00'};
   produtos.push(p);
+  if(manual) produtosEditadosManualmente = true;
   renderFormularioProdutos();
   render();
 }
 function removeProduto(i){
   produtos.splice(i,1);
+  produtosEditadosManualmente = true;
   renderFormularioProdutos();
   render();
 }
+function marcarProdutosEditados(){ produtosEditadosManualmente = true; }
 function renderFormularioProdutos(){
   const box = document.getElementById('lista-produtos');
   box.innerHTML = produtos.map((p,i)=>`
     <div class="produto-item">
       <div class="linha2">
-        <div class="campo-form"><label>Código</label><input value="${p.codigo}" oninput="produtos[${i}].codigo=this.value;render()"></div>
-        <div class="campo-form"><label>NCM/SH</label><input value="${p.ncm}" oninput="produtos[${i}].ncm=this.value;render()"></div>
+        <div class="campo-form"><label>Código</label><input value="${p.codigo}" oninput="produtos[${i}].codigo=this.value;marcarProdutosEditados();render()"></div>
+        <div class="campo-form"><label>NCM/SH</label><input value="${p.ncm}" oninput="produtos[${i}].ncm=this.value;marcarProdutosEditados();render()"></div>
       </div>
-      <div class="campo-form"><label>Descrição</label><input value="${p.descricao}" oninput="produtos[${i}].descricao=this.value;render()"></div>
+      <div class="campo-form"><label>Descrição</label><input value="${p.descricao}" oninput="produtos[${i}].descricao=this.value;marcarProdutosEditados();render()"></div>
       <div class="linha3">
-        <div class="campo-form"><label>CST</label><input value="${p.cst}" oninput="produtos[${i}].cst=this.value;render()"></div>
-        <div class="campo-form"><label>CFOP</label><input value="${p.cfop}" oninput="produtos[${i}].cfop=this.value;render()"></div>
-        <div class="campo-form"><label>Unidade</label><input value="${p.unidade}" oninput="produtos[${i}].unidade=this.value;render()"></div>
+        <div class="campo-form"><label>CST</label><input value="${p.cst}" oninput="produtos[${i}].cst=this.value;marcarProdutosEditados();render()"></div>
+        <div class="campo-form"><label>CFOP</label><input value="${p.cfop}" oninput="produtos[${i}].cfop=this.value;marcarProdutosEditados();render()"></div>
+        <div class="campo-form"><label>Unidade</label><input value="${p.unidade}" oninput="produtos[${i}].unidade=this.value;marcarProdutosEditados();render()"></div>
       </div>
       <div class="linha3">
-        <div class="campo-form"><label>Quantidade</label><input value="${p.quantidade}" oninput="produtos[${i}].quantidade=this.value;render()"></div>
-        <div class="campo-form"><label>Vl. Unitário</label><input value="${p.valorUnit}" oninput="produtos[${i}].valorUnit=this.value;render()"></div>
-        <div class="campo-form"><label>Vl. ICMS</label><input value="${p.valorIcms}" oninput="produtos[${i}].valorIcms=this.value;render()"></div>
+        <div class="campo-form"><label>Quantidade</label><input value="${p.quantidade}" oninput="produtos[${i}].quantidade=this.value;marcarProdutosEditados();render()"></div>
+        <div class="campo-form"><label>Vl. Unitário</label><input value="${p.valorUnit}" oninput="produtos[${i}].valorUnit=this.value;marcarProdutosEditados();render()"></div>
+        <div class="campo-form"><label>Vl. ICMS</label><input value="${p.valorIcms}" oninput="produtos[${i}].valorIcms=this.value;marcarProdutosEditados();render()"></div>
       </div>
       <button class="btn pequeno vermelho" onclick="removeProduto(${i})">Remover produto</button>
     </div>
@@ -652,25 +661,29 @@ function renderFormularioProdutos(){
 }
 
 // ---------- duplicatas dinâmicas ----------
-function addDuplicata(d){
+function addDuplicata(d, manual){
+  manual = manual === undefined ? true : manual;
   d = d || {numero:'001', valor:'0,00', vencimento:''};
   duplicatas.push(d);
+  if(manual) duplicatasEditadasManualmente = true;
   renderFormularioDuplicatas();
   render();
 }
 function removeDuplicata(i){
   duplicatas.splice(i,1);
+  duplicatasEditadasManualmente = true;
   renderFormularioDuplicatas();
   render();
 }
+function marcarDuplicatasEditadas(){ duplicatasEditadasManualmente = true; }
 function renderFormularioDuplicatas(){
   const box = document.getElementById('lista-duplicatas');
   box.innerHTML = duplicatas.map((d,i)=>`
     <div class="dup-item">
       <div class="linha3">
-        <div class="campo-form"><label>Número</label><input value="${d.numero}" oninput="duplicatas[${i}].numero=this.value;render()"></div>
-        <div class="campo-form"><label>Vencimento</label><input type="date" value="${d.vencimento}" oninput="duplicatas[${i}].vencimento=this.value;render()"></div>
-        <div class="campo-form"><label>Valor</label><input value="${d.valor}" oninput="duplicatas[${i}].valor=this.value;render()"></div>
+        <div class="campo-form"><label>Número</label><input value="${d.numero}" oninput="duplicatas[${i}].numero=this.value;marcarDuplicatasEditadas();render()"></div>
+        <div class="campo-form"><label>Vencimento</label><input type="date" value="${d.vencimento}" oninput="duplicatas[${i}].vencimento=this.value;marcarDuplicatasEditadas();render()"></div>
+        <div class="campo-form"><label>Valor</label><input value="${d.valor}" oninput="duplicatas[${i}].valor=this.value;marcarDuplicatasEditadas();render()"></div>
       </div>
       <button class="btn pequeno vermelho" onclick="removeDuplicata(${i})">Remover</button>
     </div>
@@ -945,18 +958,22 @@ function handleXml(ev){
 // ==========================================================================
 // ---------- IMPORTAÇÃO PADRONIZADA VIA MODELO EXCEL (recomendado) ----------
 // ==========================================================================
-// O modelo baixado tem UMA ABA POR ASSUNTO (Empresa, Nota Fiscal,
-// Destinatário, Transportador, Produtos, Duplicatas, Totais, Adicionais),
-// cada uma com título e cor próprios, para que fique impossível confundir
-// "onde coloco os dados da empresa" com "onde coloco os produtos".
-// A leitura é tabular determinística (rótulo -> id do campo), não é
-// heurística. Nada aqui bloqueia a geração do espelho: campos ausentes ou
-// abas não enviadas só geram um aviso informativo, nunca um erro impeditivo.
+// Estratégia de leitura em duas camadas: tenta abrir com ExcelJS (biblioteca
+// usada para GERAR o modelo, com estilo/cores) e, se isso falhar por
+// qualquer motivo, tenta abrir com SheetJS — um leitor OOXML independente e
+// historicamente mais tolerante a arquivos reescritos por Excel, Google
+// Sheets, LibreOffice etc. Só depois de as DUAS tentativas falharem é que o
+// arquivo é reportado como "não foi possível abrir" — e mesmo assim o erro
+// técnico original é sempre exposto no console (nunca escondido atrás de um
+// "corrompido" genérico). Qualquer aba ou campo ausente vira apenas um aviso
+// informativo: nada aqui bloqueia a geração/impressão do espelho.
 
-// Abas "chave/valor" (uma linha por campo, coluna A = rótulo, coluna B = valor)
+// ---- 1) Abas "chave/valor" (uma linha por campo, coluna "Campo"/coluna "Valor") ----
 const MODELO_SHEETS = [
   {
+    chave: 'emitente',
     sheetName: '1 - Empresa (Emitente)',
+    tituloCurto: 'Empresa (Emitente)',
     titulo: 'DADOS DA EMPRESA QUE EMITE A NOTA (EMITENTE)',
     cor: 'FF1D4D8F',
     campos: [
@@ -973,7 +990,9 @@ const MODELO_SHEETS = [
     ],
   },
   {
+    chave: 'nota',
     sheetName: '2 - Nota Fiscal',
+    tituloCurto: 'Nota Fiscal',
     titulo: 'DADOS DA NOTA FISCAL E CHAVE DE ACESSO',
     cor: 'FF6B4C9A',
     campos: [
@@ -988,7 +1007,9 @@ const MODELO_SHEETS = [
     ],
   },
   {
+    chave: 'cliente',
     sheetName: '3 - Destinatario',
+    tituloCurto: 'Destinatário',
     titulo: 'DADOS DE QUEM VAI RECEBER (DESTINATÁRIO)',
     cor: 'FF1A7D3A',
     campos: [
@@ -1005,7 +1026,9 @@ const MODELO_SHEETS = [
     ],
   },
   {
+    chave: 'transportador',
     sheetName: '4 - Transportador',
+    tituloCurto: 'Transportador',
     titulo: 'DADOS DO TRANSPORTE E VOLUMES',
     cor: 'FFB07C00',
     campos: [
@@ -1027,7 +1050,9 @@ const MODELO_SHEETS = [
     ],
   },
   {
+    chave: 'totais',
     sheetName: '7 - Totais e Impostos',
+    tituloCurto: 'Totais e Impostos',
     titulo: 'VALORES TOTAIS E IMPOSTOS DA NOTA',
     cor: 'FFB00020',
     campos: [
@@ -1045,7 +1070,9 @@ const MODELO_SHEETS = [
     ],
   },
   {
+    chave: 'adicionais',
     sheetName: '8 - Informacoes Adicionais',
+    tituloCurto: 'Informações Adicionais',
     titulo: 'INFORMAÇÕES ADICIONAIS',
     cor: 'FF555555',
     campos: [
@@ -1055,7 +1082,15 @@ const MODELO_SHEETS = [
   },
 ];
 
-// Abas em formato de tabela (uma linha por item)
+// Campos monetários: precisam de conversão numérica BR -> número real -> texto formatado.
+const CAMPOS_MONETARIOS = new Set([
+  'i_baseicms','i_valoricms','i_baseicmsst','i_valoricmsst','i_totalprodutos',
+  'i_frete','i_seguro','i_desconto','i_outras','i_ipi','i_totalnota',
+]);
+const CAMPOS_DATA = new Set(['n_dataemissao','n_datasaida']);
+const CAMPOS_HORA = new Set(['d_hora']);
+
+// ---- 2) Abas em formato de tabela (uma linha por item) ----
 const PRODUTOS_SHEET = '5 - Produtos';
 const PRODUTOS_HEADER = ['Código','Descrição','NCM/SH','CST/CSOSN','CFOP','Unidade','Quantidade','Valor Unitário','Base ICMS','Valor ICMS','Valor IPI'];
 const PRODUTOS_COR = 'FFB00020';
@@ -1064,8 +1099,50 @@ const DUPLICATAS_SHEET = '6 - Duplicatas';
 const DUPLICATAS_HEADER = ['Número','Vencimento (AAAA-MM-DD)','Valor'];
 const DUPLICATAS_COR = 'FF00707A';
 
-const SENTINELA_EXEMPLO = 'exemplo'; // valor usado na linha de exemplo, ignorado automaticamente na importação
+const SENTINELA_EXEMPLO = 'exemplo'; // valor da linha de exemplo — ignorado automaticamente na importação
 
+// Apelidos de abas (não depende do nome exato — funciona mesmo se o usuário renomear)
+const ALIASES_ABAS = {
+  emitente: ['empresa', 'emitente', '1 - empresa (emitente)', 'empresa (emitente)', 'emissor', 'dados da empresa'],
+  nota: ['nota fiscal', '2 - nota fiscal', 'nota', 'nfe', 'nf-e', 'dados da nota'],
+  cliente: ['cliente', 'destinatario', '3 - destinatario', 'comprador', 'destinatario/cliente'],
+  transportador: ['transportador', '4 - transportador', 'transporte', 'frete'],
+  produtos: ['produtos', 'itens', 'mercadorias', 'itens da nota', '5 - produtos', 'produtos/itens'],
+  duplicatas: ['duplicatas', 'parcelas', '6 - duplicatas', 'fatura'],
+  totais: ['totais e impostos', 'totais', 'impostos', '7 - totais e impostos'],
+  adicionais: ['informacoes adicionais', '8 - informacoes adicionais', 'observacoes', 'informacoes'],
+};
+
+// Apelidos de colunas da aba de Produtos (não depende de ordem nem de nome exato)
+const ALIASES_COLUNAS_PRODUTO = {
+  codigo: ['codigo', 'cod', 'codigo produto'],
+  descricao: ['descricao', 'produto', 'item', 'descricao do produto'],
+  ncm: ['ncm', 'ncm/sh', 'ncmsh'],
+  cst: ['cst', 'csosn', 'cst/csosn'],
+  cfop: ['cfop'],
+  unidade: ['unidade', 'un', 'ucom', 'un.'],
+  quantidade: ['quantidade', 'qtd', 'qtde', 'qcom', 'quant.'],
+  valorUnit: ['valor unitario', 'preco unitario', 'vuncom', 'vl. unitario', 'valor unit'],
+  baseIcms: ['base icms', 'base de calculo icms', 'b.calc.icms', 'base calculo icms'],
+  valorIcms: ['valor icms', 'vl. icms', 'icms'],
+  valorIpi: ['valor ipi', 'vl. ipi', 'ipi'],
+  valorTotal: ['valor total', 'total', 'vprod', 'vl. total'],
+};
+
+// Apelidos de colunas da aba de Duplicatas
+const ALIASES_COLUNAS_DUPLICATA = {
+  numero: ['numero', 'num', 'parcela', 'n.'],
+  vencimento: ['vencimento', 'data de vencimento', 'dvenc', 'vencimento (aaaa-mm-dd)'],
+  valor: ['valor', 'valor da parcela', 'vdup'],
+};
+
+function normalizarNomeAba(s){
+  return normalizarTexto(s).replace(/^\d+\s*-\s*/, ''); // remove numeração tipo "5 - "
+}
+
+// ==========================================================================
+// ---------- geração do modelo (escrita — usa ExcelJS para ter estilo) ----------
+// ==========================================================================
 function estilizarTitulo(cell, cor){
   cell.font = { bold:true, size:13, color:{argb:'FFFFFFFF'} };
   cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:cor} };
@@ -1124,16 +1201,15 @@ function adicionarAbaInstrucoes(wb){
   estilizarTitulo(titulo, 'FF333333');
   ws.getRow(1).height = 30;
 
-  const linhas = [
-    '',
-    'Este arquivo tem UMA ABA PARA CADA ASSUNTO, na ordem em que aparecem na parte de baixo da tela:',
-    '',
-  ];
   ws.getColumn(2).width = 14;
   ws.getColumn(1).width = 95;
 
   let linhaAtual = 3;
-  linhas.forEach(l=>{ ws.getCell(linhaAtual,1).value = l; linhaAtual++; });
+  [
+    '',
+    'Este arquivo tem UMA ABA PARA CADA ASSUNTO, na ordem em que aparecem na parte de baixo da tela:',
+    '',
+  ].forEach(l=>{ ws.getCell(linhaAtual,1).value = l; linhaAtual++; });
 
   const guia = [
     ['1 - Empresa (Emitente)', 'Somente os dados de QUEM EMITE a nota (sua empresa).', 'FF1D4D8F'],
@@ -1149,26 +1225,24 @@ function adicionarAbaInstrucoes(wb){
     const c1 = ws.getCell(linhaAtual,1);
     c1.value = `  ${nome}`;
     c1.font = { bold:true };
-    const swatch = ws.getCell(linhaAtual,2);
-    swatch.fill = { type:'pattern', pattern:'solid', fgColor:{argb:cor} };
+    ws.getCell(linhaAtual,2).fill = { type:'pattern', pattern:'solid', fgColor:{argb:cor} };
     linhaAtual++;
     ws.getCell(linhaAtual,1).value = `      ${desc}`;
     linhaAtual += 2;
   });
 
-  const finais = [
+  [
     'REGRAS IMPORTANTES:',
-    '• Não renomeie as abas, nem os textos da coluna A / cabeçalhos das tabelas.',
     '• Em cada aba de "Campo / Valor", preencha somente a coluna B.',
     '• Na aba de Produtos e na de Duplicatas, apague a linha de exemplo (ou troque pelos seus dados) e acrescente quantas linhas precisar.',
-    '• Datas no formato AAAA-MM-DD. Valores no formato brasileiro (ex.: 1.234,56).',
+    '• Datas no formato AAAA-MM-DD. Valores no formato brasileiro (ex.: 1.234,56) ou como número normal — os dois funcionam.',
+    '• Você pode renomear abas (ex.: "Produtos" -> "Itens") e reordenar colunas de Produtos/Duplicatas: o sistema reconhece por apelidos, não por posição fixa.',
     '',
     'NADA AQUI É OBRIGATÓRIO: você pode deixar campos, abas ou o arquivo inteiro em branco.',
     'O site sempre permite gerar/baixar o espelho — ele apenas avisa quais campos não vieram preenchidos.',
     '',
-    'Quando terminar, salve o arquivo e envie-o de volta pelo campo "Modelo Excel" no site.',
-  ];
-  finais.forEach(l=>{ ws.getCell(linhaAtual,1).value = l; linhaAtual++; });
+    'Quando terminar, salve o arquivo (mantendo o formato .xlsx) e envie-o de volta pelo campo "Modelo Excel" no site.',
+  ].forEach(l=>{ ws.getCell(linhaAtual,1).value = l; linhaAtual++; });
 }
 
 function baixarModeloExcel(){
@@ -1196,11 +1270,69 @@ function baixarModeloExcel(){
   });
 }
 
+// ==========================================================================
+// ---------- utilidades de conversão robustas ----------
+// ==========================================================================
+
+// getCellValue: resolve o valor "cru" de uma célula do ExcelJS para um tipo
+// simples (string | number | Date | ''), tratando fórmulas (result), texto
+// rico (richText), hiperlinks ({text, hyperlink}), erros de fórmula e
+// null/undefined. Nunca lança exceção.
+function getCellValue(v){
+  try{
+    if(v === null || v === undefined) return '';
+    if(v instanceof Date) return v;
+    if(typeof v === 'object'){
+      if('result' in v) return getCellValue(v.result);
+      if(Array.isArray(v.richText)) return v.richText.map(t=>t.text).join('');
+      if('text' in v && 'hyperlink' in v) return v.text;
+      if('error' in v) return '';
+      if('sharedFormula' in v) return '';
+      return '';
+    }
+    return v; // string ou number — mantido no tipo original (não força para string)
+  }catch(e){
+    console.warn('getCellValue: valor de célula inesperado, tratado como vazio.', v, e);
+    return '';
+  }
+}
+
+// Converte números no padrão brasileiro (1.234,56 / R$ 50,00) e também
+// aceita números reais do Excel (que não devem virar string antes da conta).
+function parseNumeroBR(valor){
+  if(valor === null || valor === undefined || valor === '') return 0;
+  if(typeof valor === 'number') return valor;
+  if(valor instanceof Date) return 0;
+  let s = String(valor).trim();
+  s = s.replace(/R\$\s?/gi, '').trim();
+  if(s === '') return 0;
+  const temVirgula = s.includes(',');
+  const temPonto = s.includes('.');
+  if(temVirgula){
+    s = s.replace(/\./g, '').replace(',', '.');
+  } else if(temPonto){
+    const partes = s.split('.');
+    const pareceMilhar = partes.length > 2 || (partes.length === 2 && partes[1].length === 3 && partes[0].length <= 3);
+    if(pareceMilhar) s = s.replace(/\./g, '');
+  }
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+}
+function formatarMoedaBR(n){
+  return (Number(n) || 0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
 function normalizarDataPlanilha(v){
   if(v === undefined || v === null || v === '') return '';
   if(v instanceof Date){
-    const y = v.getFullYear(), m = String(v.getMonth()+1).padStart(2,'0'), d = String(v.getDate()).padStart(2,'0');
+    const y = v.getUTCFullYear(), m = String(v.getUTCMonth()+1).padStart(2,'0'), d = String(v.getUTCDate()).padStart(2,'0');
     return `${y}-${m}-${d}`;
+  }
+  if(typeof v === 'number'){
+    // serial de data do Excel (dias desde 1899-12-30)
+    const base = Date.UTC(1899, 11, 30);
+    const dt = new Date(base + Math.round(v) * 86400000);
+    return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth()+1).padStart(2,'0')}-${String(dt.getUTCDate()).padStart(2,'0')}`;
   }
   const s = String(v).trim();
   const iso = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
@@ -1209,132 +1341,339 @@ function normalizarDataPlanilha(v){
   if(br) return `${br[3]}-${br[2].padStart(2,'0')}-${br[1].padStart(2,'0')}`;
   return '';
 }
-function valorCelula(v){
-  if(v && typeof v === 'object' && 'result' in v) return v.result; // célula com fórmula
-  if(v && typeof v === 'object' && v.richText) return v.richText.map(t=>t.text).join('');
-  return v;
+function normalizarHoraPlanilha(v){
+  if(v === undefined || v === null || v === '') return '';
+  if(v instanceof Date){
+    return `${String(v.getUTCHours()).padStart(2,'0')}:${String(v.getUTCMinutes()).padStart(2,'0')}`;
+  }
+  if(typeof v === 'number'){
+    const totalMin = Math.round(v * 24 * 60);
+    return `${String(Math.floor(totalMin/60)%24).padStart(2,'0')}:${String(totalMin%60).padStart(2,'0')}`;
+  }
+  const m = String(v).trim().match(/^(\d{1,2}):(\d{2})/);
+  return m ? `${m[1].padStart(2,'0')}:${m[2]}` : '';
 }
 
-// Lê uma aba "Campo/Valor": nunca lança erro se a aba faltar — apenas
-// registra os rótulos como "faltantes" para o aviso final.
-function lerAbaChaveValor(wb, def, faltantes){
-  const ws = wb.getWorksheet(def.sheetName);
+function formatarValorCampo(id, bruto){
+  if(bruto === null || bruto === undefined || bruto === '') return '';
+  if(CAMPOS_MONETARIOS.has(id)) return formatarMoedaBR(parseNumeroBR(bruto));
+  if(CAMPOS_DATA.has(id)) return normalizarDataPlanilha(bruto);
+  if(CAMPOS_HORA.has(id)) return normalizarHoraPlanilha(bruto);
+  return String(bruto).trim();
+}
+
+function escaparHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function mensagemAviso(html){ return `<div class="nota-heuristica">${html}</div>`; }
+function mensagemSucesso(html){ return `<div class="nota-heuristica sucesso">${html}</div>`; }
+
+// ==========================================================================
+// ---------- normalização das duas fontes de leitura (ExcelJS / SheetJS) ----
+// ==========================================================================
+// Depois de aberto por qualquer um dos dois leitores, o arquivo vira uma
+// estrutura única e simples: { nomeDaAba: linhas[][] }. Todo o resto do
+// código (busca de abas por apelido, busca de cabeçalho, leitura de campos)
+// trabalha só em cima dessa matriz, sem saber qual biblioteca leu o arquivo.
+function paraMatrizExcelJS(wb){
+  const mapa = {};
+  wb.worksheets.forEach(ws=>{
+    const linhas = [];
+    const maxRow = ws.rowCount || 0;
+    for(let r=1;r<=maxRow;r++){
+      const row = ws.getRow(r);
+      const maxCol = row.cellCount || 0;
+      const linha = [];
+      for(let c=1;c<=maxCol;c++){
+        linha.push(getCellValue(row.getCell(c).value));
+      }
+      linhas.push(linha);
+    }
+    mapa[ws.name] = linhas;
+  });
+  return mapa;
+}
+function paraMatrizSheetJS(wb){
+  const mapa = {};
+  wb.SheetNames.forEach(nome=>{
+    const ws = wb.Sheets[nome];
+    mapa[nome] = XLSX.utils.sheet_to_json(ws, {header:1, defval:'', raw:true, blankrows:false});
+  });
+  return mapa;
+}
+
+function encontrarNomeAba(matriz, chave){
+  const aliases = ALIASES_ABAS[chave].map(normalizarNomeAba);
+  return Object.keys(matriz).find(nome => aliases.includes(normalizarNomeAba(nome))) || null;
+}
+
+// ==========================================================================
+// ---------- leitura das abas "chave/valor" ----------
+// ==========================================================================
+function localizarColunasChaveValor(linhas){
+  const max = Math.min(linhas.length, 20);
+  for(let r=0;r<max;r++){
+    const linha = linhas[r] || [];
+    let campoCol = -1, valorCol = -1;
+    linha.forEach((cel,c)=>{
+      const t = normalizarTexto(cel);
+      if(t === 'campo') campoCol = c;
+      if(t.startsWith('valor')) valorCol = c;
+    });
+    if(campoCol >= 0 && valorCol >= 0) return { linha:r, campoCol, valorCol };
+  }
+  return { linha:-1, campoCol:0, valorCol:1 }; // não achou cabeçalho: assume A=Campo, B=Valor
+}
+
+function lerAbaChaveValor(matriz, def, faltantes){
   let lidos = 0;
-  if(!ws){
-    def.campos.forEach(([label])=> faltantes.push(`${label} (aba "${def.sheetName}" não enviada)`));
+  const nomeAba = encontrarNomeAba(matriz, def.chave);
+  if(!nomeAba){
+    def.campos.forEach(([label])=> faltantes.push(`${label} (aba de "${def.tituloCurto}" não encontrada no arquivo)`));
     return lidos;
   }
-  const mapa = {};
-  def.campos.forEach(([label,id])=>{ mapa[normalizarTexto(label)] = {label,id}; });
+  const linhas = matriz[nomeAba];
+  const {linha, campoCol, valorCol} = localizarColunasChaveValor(linhas);
+  const mapaCampos = {};
+  def.campos.forEach(([label,id])=>{ mapaCampos[normalizarTexto(label)] = {label,id}; });
   const preenchidos = new Set();
-  ws.eachRow((row, rowNumber)=>{
-    if(rowNumber <= 2) return; // pula título e cabeçalho
-    const info = mapa[normalizarTexto(row.getCell(1).value)];
-    if(!info) return;
-    const valor = valorCelula(row.getCell(2).value);
-    if(valor !== null && valor !== undefined && String(valor).trim() !== ''){
+  for(let r = linha+1; r < linhas.length; r++){
+    const l = linhas[r] || [];
+    const info = mapaCampos[normalizarTexto(l[campoCol])];
+    if(!info) continue;
+    const valorFinal = formatarValorCampo(info.id, l[valorCol]);
+    if(valorFinal !== ''){
       const el = document.getElementById(info.id);
-      if(el) el.value = String(valor).trim();
+      if(el) el.value = valorFinal;
       preenchidos.add(info.label);
       lidos++;
     }
-  });
+  }
   def.campos.forEach(([label])=>{
-    if(!preenchidos.has(label)) faltantes.push(`${label} (não preenchido na aba "${def.sheetName}")`);
+    if(!preenchidos.has(label)) faltantes.push(`${label} (não preenchido na aba de "${def.tituloCurto}")`);
   });
   return lidos;
 }
 
-// Lê uma aba em formato de tabela (Produtos/Duplicatas), ignorando a linha
-// de exemplo (sentinela) e linhas totalmente vazias. Nunca lança erro.
-function lerAbaTabela(wb, sheetName, header){
-  const ws = wb.getWorksheet(sheetName);
-  if(!ws) return { linhas:[], enviada:false };
-  const cabecalho = ws.getRow(2).values;
-  const indice = {};
-  cabecalho.forEach((h,i)=>{ if(h) indice[String(h).trim()] = i; });
-  const linhas = [];
-  ws.eachRow((row, rowNumber)=>{
-    if(rowNumber <= 2) return;
-    const obj = {};
-    header.forEach(h=>{
-      const i = indice[h];
-      obj[h] = i ? valorCelula(row.getCell(i).value) : '';
+// ==========================================================================
+// ---------- leitura das abas em tabela (Produtos / Duplicatas) ----------
+// ==========================================================================
+function localizarCabecalhoTabela(linhas, aliasesColunas, minimoReconhecidas){
+  const max = Math.min(linhas.length, 30);
+  for(let r=0;r<max;r++){
+    const linha = linhas[r] || [];
+    const indice = {};
+    let reconhecidas = 0;
+    linha.forEach((cel,c)=>{
+      const t = normalizarTexto(cel);
+      for(const [campo,aliases] of Object.entries(aliasesColunas)){
+        if(indice[campo] === undefined && aliases.includes(t)){
+          indice[campo] = c;
+          reconhecidas++;
+        }
+      }
     });
-    const primeiraColuna = String(obj[header[0]]||'').trim().toLowerCase();
-    if(primeiraColuna === SENTINELA_EXEMPLO) return; // linha de exemplo
-    const temValor = header.some(h=> obj[h] !== null && obj[h] !== undefined && String(obj[h]).trim() !== '');
-    if(temValor) linhas.push(obj);
-  });
-  return { linhas, enviada:true };
+    if(reconhecidas >= minimoReconhecidas) return { linha:r, indice };
+  }
+  return null;
 }
 
+function lerTabela(matriz, chave, aliasesColunas, colunaSentinela, minimoReconhecidas){
+  const nomeAba = encontrarNomeAba(matriz, chave);
+  if(!nomeAba) return { linhas:[], enviada:false, cabecalhoEncontrado:false };
+  const linhasBrutas = matriz[nomeAba];
+  const cab = localizarCabecalhoTabela(linhasBrutas, aliasesColunas, minimoReconhecidas);
+  if(!cab) return { linhas:[], enviada:true, cabecalhoEncontrado:false };
+  const linhas = [];
+  for(let r = cab.linha+1; r < linhasBrutas.length; r++){
+    const l = linhasBrutas[r] || [];
+    const obj = {};
+    Object.entries(cab.indice).forEach(([campo,c])=>{ obj[campo] = l[c]; });
+    const sentinela = normalizarTexto(obj[colunaSentinela]);
+    if(sentinela === SENTINELA_EXEMPLO) continue;
+    const temValor = Object.values(obj).some(v => v !== null && v !== undefined && String(v).trim() !== '');
+    if(temValor) linhas.push(obj);
+  }
+  return { linhas, enviada:true, cabecalhoEncontrado:true };
+}
+
+function lerAbaTabelaProdutos(matriz){
+  return lerTabela(matriz, 'produtos', ALIASES_COLUNAS_PRODUTO, 'codigo', 2);
+}
+function lerAbaTabelaDuplicatas(matriz){
+  return lerTabela(matriz, 'duplicatas', ALIASES_COLUNAS_DUPLICATA, 'numero', 1);
+}
+
+// ==========================================================================
+// ---------- orquestração do upload ----------
+// ==========================================================================
 async function handleExcel(ev){
   const file = ev.target.files[0];
   const status = document.getElementById('excel-status');
   if(!file) return;
-  try{
-    const buf = await file.arrayBuffer();
-    const wb = new ExcelJS.Workbook();
-    await wb.xlsx.load(buf);
+  status.innerHTML = '';
 
-    const faltantes = [];
-    let camposLidos = 0;
-    MODELO_SHEETS.forEach(def=>{ camposLidos += lerAbaChaveValor(wb, def, faltantes); });
-
-    const { linhas: linhasProdutos, enviada: produtosEnviados } = lerAbaTabela(wb, PRODUTOS_SHEET, PRODUTOS_HEADER);
-    if(linhasProdutos.length){
-      produtos = linhasProdutos.map(l=>({
-        codigo: String(l['Código']||''),
-        descricao: String(l['Descrição']||''),
-        ncm: String(l['NCM/SH']||''),
-        cst: String(l['CST/CSOSN']||''),
-        cfop: String(l['CFOP']||''),
-        unidade: String(l['Unidade']||''),
-        quantidade: String(l['Quantidade']||''),
-        valorUnit: String(l['Valor Unitário']||'0,00'),
-        baseIcms: String(l['Base ICMS']||'0,00'),
-        valorIcms: String(l['Valor ICMS']||'0,00'),
-        valorIpi: String(l['Valor IPI']||'0,00'),
-      }));
-      renderFormularioProdutos();
-    }
-
-    const { linhas: linhasDuplicatas, enviada: duplicatasEnviadas } = lerAbaTabela(wb, DUPLICATAS_SHEET, DUPLICATAS_HEADER);
-    if(linhasDuplicatas.length){
-      duplicatas = linhasDuplicatas.map(l=>({
-        numero: String(l['Número']||''),
-        vencimento: normalizarDataPlanilha(l['Vencimento (AAAA-MM-DD)']),
-        valor: String(l['Valor']||'0,00'),
-      }));
-      renderFormularioDuplicatas();
-    }
-
-    recalcularTotais();
-    render();
-
-    const resumoProdutos = produtosEnviados
-      ? `${linhasProdutos.length} produto(s) importado(s).`
-      : `aba "${PRODUTOS_SHEET}" não enviada — nenhum produto importado.`;
-    const resumoDuplicatas = duplicatasEnviadas
-      ? `${linhasDuplicatas.length} duplicata(s) importada(s).`
-      : `aba "${DUPLICATAS_SHEET}" não enviada — nenhuma duplicata importada.`;
-
-    const listaFaltantes = faltantes.length
-      ? `<br><br>⚠ ${faltantes.length} campo(s) não vieram preenchidos no arquivo (ficarão em branco no espelho):<br>` +
-        faltantes.slice(0,15).map(f=>`• ${f}`).join('<br>') +
-        (faltantes.length > 15 ? `<br>• …e mais ${faltantes.length - 15} campo(s).` : '')
-      : '';
-
-    status.innerHTML = `<div class="nota-heuristica sucesso">
-      ✅ Planilha importada: ${camposLidos} campo(s) lido(s) com precisão. ${resumoProdutos} ${resumoDuplicatas}
-      ${listaFaltantes}
-      <br><br>Isso não impede nada — você pode baixar o PDF ou imprimir normalmente, os campos faltantes simplesmente aparecerão em branco.
-    </div>`;
-  }catch(err){
-    console.error(err);
-    status.innerHTML = `<div class="nota-heuristica">⚠ Não foi possível ler este arquivo (pode estar corrompido ou em outro formato). Isso não impede você de continuar: preencha os campos manualmente ou baixe o modelo e tente novamente.</div>`;
+  // 2) Não depender de file.type (o MIME pode vir vazio/errado) — valida pela extensão do nome.
+  if(!/\.xlsx$/i.test(file.name)){
+    status.innerHTML = mensagemAviso(`⚠ Envie um arquivo .xlsx (arquivo recebido: "${escaparHtml(file.name)}"). Se ele veio do Excel antigo (.xls), abra-o e use "Salvar como" → .xlsx.`);
+    return;
   }
+
+  // 1) Lê como ArrayBuffer.
+  const buffer = await file.arrayBuffer();
+
+  // 3) Verifica a assinatura binária (PK = zip) ANTES de tentar interpretar como XLSX.
+  const bytes = new Uint8Array(buffer.slice(0,8));
+  const ehZip = bytes[0] === 0x50 && bytes[1] === 0x4B; // 'PK'
+  const ehXlsAntigo = bytes[0] === 0xD0 && bytes[1] === 0xCF && bytes[2] === 0x11 && bytes[3] === 0xE0; // OLE2 (.xls antigo)
+  if(!ehZip){
+    console.error('[Importação Excel] Arquivo não tem assinatura ZIP/PK — não é um .xlsx real.', { nome:file.name, primeirosBytes: Array.from(bytes) });
+    status.innerHTML = mensagemAviso(
+      ehXlsAntigo
+        ? '⚠ Este é um arquivo .xls antigo (formato binário do Excel 97-2003), e não um .xlsx. Abra-o em algum editor de planilhas e use "Salvar como" → .xlsx antes de enviar.'
+        : '⚠ Este arquivo não tem a estrutura interna de um .xlsx real (o começo do arquivo não bate com a de uma planilha Excel — pode ser um .csv/.txt renomeado). Envie o .xlsx original, sem apenas trocar a extensão do arquivo.'
+    );
+    return;
+  }
+
+  // Tenta abrir com ExcelJS; se falhar, tenta com o leitor alternativo (SheetJS) antes de desistir.
+  let matriz = null;
+  try{
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(buffer);
+    matriz = paraMatrizExcelJS(wb);
+  }catch(erroExcelJS){
+    console.error('[Importação Excel] ExcelJS não conseguiu abrir o arquivo. Tentando leitor alternativo (SheetJS).', erroExcelJS);
+    try{
+      const wbAlt = XLSX.read(buffer, {type:'array', cellDates:true});
+      matriz = paraMatrizSheetJS(wbAlt);
+      console.warn('[Importação Excel] Arquivo aberto com sucesso pelo leitor alternativo (SheetJS) depois de falhar no ExcelJS — normal em arquivos reescritos por outros programas.');
+    }catch(erroSheetJS){
+      console.error('[Importação Excel] Também falhou no leitor alternativo (SheetJS).', erroSheetJS);
+      status.innerHTML = mensagemAviso(
+        `⚠ Não foi possível abrir este .xlsx (erro interno ao processar o arquivo). Detalhe técnico: "${escaparHtml(erroExcelJS.message || String(erroExcelJS))}" — veja o console do navegador (F12) para mais informações. ` +
+        'Isso não impede nada: você pode preencher os campos manualmente e gerar o espelho normalmente.'
+      );
+      return;
+    }
+  }
+
+  // A partir daqui o arquivo abriu com sucesso. Qualquer aba/campo ausente é só um aviso.
+  const faltantes = [];
+  let camposLidos = 0;
+  try{
+    MODELO_SHEETS.forEach(def=>{ camposLidos += lerAbaChaveValor(matriz, def, faltantes); });
+  }catch(erro){
+    console.error('[Importação Excel] Erro inesperado ao interpretar os dados cadastrais — prosseguindo mesmo assim.', erro);
+  }
+
+  let linhasProdutos = [], produtosEnviados = false, cabecalhoProdutos = false;
+  try{
+    ({ linhas: linhasProdutos, enviada: produtosEnviados, cabecalhoEncontrado: cabecalhoProdutos } = lerAbaTabelaProdutos(matriz));
+  }catch(erro){ console.error('[Importação Excel] Erro ao ler a aba de produtos — prosseguindo mesmo assim.', erro); }
+
+  let linhasDuplicatas = [], duplicatasEnviadas = false;
+  try{
+    ({ linhas: linhasDuplicatas, enviada: duplicatasEnviadas } = lerAbaTabelaDuplicatas(matriz));
+  }catch(erro){ console.error('[Importação Excel] Erro ao ler a aba de duplicatas — prosseguindo mesmo assim.', erro); }
+
+  // 14) Substitui produtos/duplicatas automaticamente só se ainda não houver dados digitados à mão;
+  // caso contrário, pede confirmação antes de sobrescrever.
+  let produtosAplicados = false, produtosIgnoradosPorConfirmacao = false;
+  if(linhasProdutos.length){
+    let podeSubstituir = true;
+    if(produtosEditadosManualmente){
+      podeSubstituir = confirm(
+        `Você já tem ${produtos.length} produto(s) preenchido(s) manualmente.\n\n` +
+        `A planilha importada tem ${linhasProdutos.length} produto(s).\n\n` +
+        'Clique OK para SUBSTITUIR os produtos atuais pelos importados, ou Cancelar para manter os seus e ignorar os da planilha.'
+      );
+    }
+    if(podeSubstituir){
+      produtos = linhasProdutos.map(o=>({
+        codigo: String(o.codigo ?? '').trim(),
+        descricao: String(o.descricao ?? '').trim(),
+        ncm: String(o.ncm ?? '').trim(),
+        cst: String(o.cst ?? '').trim(),
+        cfop: String(o.cfop ?? '').trim(),
+        unidade: String(o.unidade ?? '').trim(),
+        quantidade: String(o.quantidade ?? '').trim(),
+        valorUnit: formatarMoedaBR(parseNumeroBR(o.valorUnit ?? 0)),
+        baseIcms: formatarMoedaBR(parseNumeroBR(o.baseIcms ?? 0)),
+        valorIcms: formatarMoedaBR(parseNumeroBR(o.valorIcms ?? 0)),
+        valorIpi: formatarMoedaBR(parseNumeroBR(o.valorIpi ?? 0)),
+      }));
+      produtosEditadosManualmente = false;
+      renderFormularioProdutos();
+      produtosAplicados = true;
+    } else {
+      produtosIgnoradosPorConfirmacao = true;
+    }
+  }
+
+  let duplicatasAplicadas = false, duplicatasIgnoradasPorConfirmacao = false;
+  if(linhasDuplicatas.length){
+    let podeSubstituir = true;
+    if(duplicatasEditadasManualmente){
+      podeSubstituir = confirm(
+        `Você já tem ${duplicatas.length} duplicata(s) preenchida(s) manualmente.\n\n` +
+        `A planilha importada tem ${linhasDuplicatas.length} duplicata(s).\n\n` +
+        'Clique OK para SUBSTITUIR as duplicatas atuais pelas importadas, ou Cancelar para manter as suas.'
+      );
+    }
+    if(podeSubstituir){
+      duplicatas = linhasDuplicatas.map(o=>({
+        numero: String(o.numero ?? '').trim(),
+        vencimento: normalizarDataPlanilha(o.vencimento),
+        valor: formatarMoedaBR(parseNumeroBR(o.valor ?? 0)),
+      }));
+      duplicatasEditadasManualmente = false;
+      renderFormularioDuplicatas();
+      duplicatasAplicadas = true;
+    } else {
+      duplicatasIgnoradasPorConfirmacao = true;
+    }
+  }
+
+  recalcularTotais();
+  render();
+
+  // 11) Diferencia o resultado final: sem campos reconhecidos / parcial / concluída.
+  const nadaReconhecido = camposLidos === 0 && !produtosAplicados && !duplicatasAplicadas && linhasProdutos.length === 0 && linhasDuplicatas.length === 0;
+  if(nadaReconhecido){
+    status.innerHTML = mensagemAviso(
+      '⚠ O arquivo abriu normalmente (planilha válida), mas nenhum campo conhecido foi reconhecido nele. ' +
+      'Confira se é o modelo certo (baixe um novo modelo se precisar) ou preencha os campos manualmente — isso não impede gerar o espelho.'
+    );
+    return;
+  }
+
+  const resumoProdutos = !produtosEnviados
+    ? `aba de Produtos não encontrada — nenhum produto importado.`
+    : !cabecalhoProdutos
+      ? `aba de Produtos encontrada, mas sem um cabeçalho reconhecível — nenhum produto importado.`
+      : produtosIgnoradosPorConfirmacao
+        ? `${linhasProdutos.length} produto(s) encontrados na planilha, mas mantidos os seus (você optou por não substituir).`
+        : `${linhasProdutos.length} produto(s) importado(s).`;
+
+  const resumoDuplicatas = !duplicatasEnviadas
+    ? `aba de Duplicatas não encontrada — nenhuma duplicata importada.`
+    : duplicatasIgnoradasPorConfirmacao
+      ? `duplicatas encontradas na planilha, mas mantidas as suas.`
+      : `${linhasDuplicatas.length} duplicata(s) importada(s).`;
+
+  const listaFaltantes = faltantes.length
+    ? `<br><br>⚠ ${faltantes.length} campo(s) não vieram preenchidos (ficarão em branco no espelho):<br>` +
+      faltantes.slice(0,15).map(f=>`• ${escaparHtml(f)}`).join('<br>') +
+      (faltantes.length > 15 ? `<br>• …e mais ${faltantes.length - 15} campo(s).` : '')
+    : '';
+
+  const concluida = faltantes.length === 0 && camposLidos > 0;
+  status.innerHTML = mensagemSucesso(
+    `${concluida ? '✅ Importação concluída' : '☑ Importação parcial concluída'}: ${camposLidos} campo(s) cadastrais lido(s). ${resumoProdutos} ${resumoDuplicatas}` +
+    listaFaltantes +
+    '<br><br>Isso não impede nada — você pode baixar o PDF ou imprimir normalmente; os campos faltantes simplesmente aparecerão em branco.'
+  );
 }
 
 // ---------- importar PDF / DOCX / TXT (heurístico, best-effort) ----------
@@ -1476,8 +1815,8 @@ function limparTudo(){
 }
 
 // ---------- inicialização ----------
-addProduto({codigo:'0001', descricao:'PRODUTO MODELO', ncm:'00000000', cst:'000', cfop:'5102', unidade:'UN', quantidade:'1', valorUnit:'100,00', baseIcms:'100,00', valorIcms:'18,00', valorIpi:'0,00'});
-addDuplicata({numero:'001', valor:'100,00', vencimento:''});
+addProduto({codigo:'0001', descricao:'PRODUTO MODELO', ncm:'00000000', cst:'000', cfop:'5102', unidade:'UN', quantidade:'1', valorUnit:'100,00', baseIcms:'100,00', valorIcms:'18,00', valorIpi:'0,00'}, false);
+addDuplicata({numero:'001', valor:'100,00', vencimento:''}, false);
 recalcularTotais();
 render();
 </script>
