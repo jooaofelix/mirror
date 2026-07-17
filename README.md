@@ -19,20 +19,29 @@ Abra o arquivo `index.html` diretamente no navegador (não precisa de servidor n
 
 PDFs e documentos Word não têm uma estrutura de dados padronizada (ao contrário do XML da NFe) — cada nota, boleto ou relatório pode organizar o texto de um jeito diferente. Por isso, a leitura desses formatos é feita por **busca de padrões** (CNPJ, chave de acesso de 44 dígitos, valores monetários, datas, etc.) e deve sempre ser conferida manualmente.
 
-### Solução: modelo Excel padronizado
+### Solução: modelo Excel padronizado, com uma aba por assunto
 
-Para garantir 100% de precisão na importação, o site oferece um **modelo Excel (.xlsx)** com estrutura fixa:
+Para garantir 100% de precisão na importação — e deixar impossível confundir "onde coloco os dados da empresa" com "onde coloco os produtos" — o site oferece um **modelo Excel (.xlsx)** com uma aba dedicada a cada assunto, cada uma com título e cor próprios:
 
 1. Clique em **"⬇ Baixar modelo Excel"** no painel esquerdo.
-2. O arquivo baixado tem 4 abas:
-   - **Dados**: coluna `Campo` (rótulo fixo, não altere) e coluna `Valor` (preencha aqui).
-   - **Produtos**: uma linha por item da nota (Código, Descrição, NCM/SH, CFOP, quantidade, valores etc.).
-   - **Duplicatas**: uma linha por parcela/duplicata (Número, Vencimento, Valor).
-   - **Instruções**: passo a passo de preenchimento.
-3. Preencha apenas os valores, sem renomear abas, cabeçalhos ou rótulos da coluna A.
-4. Envie o arquivo preenchido pelo campo **"Modelo Excel"** no site — os dados são lidos linha a linha, por correspondência exata de rótulo/coluna, sem heurística.
+2. O arquivo baixado tem estas abas, nesta ordem:
+   - **Instruções** — abre primeiro, explica o passo a passo e mostra a cor de cada aba.
+   - **1 - Empresa (Emitente)** — somente os dados de quem emite a nota.
+   - **2 - Nota Fiscal** — número, série, datas, chave de acesso, protocolo.
+   - **3 - Destinatario** — somente os dados de quem vai receber.
+   - **4 - Transportador** — dados do transporte e volumes, se houver.
+   - **5 - Produtos** — somente os produtos/itens, uma linha por produto.
+   - **6 - Duplicatas** — uma linha por parcela de pagamento, se houver.
+   - **7 - Totais e Impostos** — valores totais e impostos da nota.
+   - **8 - Informacoes Adicionais** — textos livres complementares.
+3. Nas abas de "Campo/Valor", preencha somente a coluna B. Nas abas de tabela (Produtos/Duplicatas), apague ou substitua a linha de exemplo e acrescente quantas linhas precisar.
+4. Envie o arquivo preenchido pelo campo **"Modelo Excel"** no site — os dados são lidos aba a aba, por correspondência exata de rótulo/coluna, sem heurística.
 
 Esse é o "padrão de arquivo" que garante bons resultados quando a origem dos dados não é um XML de NFe: basta transcrever as informações do PDF/Word/planilha original para o modelo e importar.
+
+### Nada bloqueia a geração do espelho
+
+Nenhum campo é obrigatório em lugar nenhum do site. Você pode baixar o PDF ou imprimir a qualquer momento — em branco, parcialmente preenchido ou com uma importação incompleta. Se a planilha, o XML ou o PDF/Word enviado não trouxer todas as informações, o site nunca bloqueia nada: ele só mostra um aviso listando quais campos não vieram (e por isso aparecerão em branco no espelho), deixando você decidir se completa manualmente ou segue em frente assim mesmo.
 
 ## Estrutura do projeto
 
@@ -46,7 +55,7 @@ Bibliotecas usadas (via CDN, carregadas no `<head>`):
 - [html2canvas](https://github.com/niklasvh/html2canvas) + [jsPDF](https://github.com/parallax/jsPDF) — exportação do espelho para PDF.
 - [JSZip](https://github.com/Stuk/jszip) — leitura de `.docx` (extração de texto do `word/document.xml`).
 - [pdf.js](https://mozilla.github.io/pdf.js/) — extração de texto de arquivos `.pdf`.
-- [SheetJS (xlsx)](https://sheetjs.com/) — geração e leitura do modelo Excel padronizado.
+- [ExcelJS](https://github.com/exceljs/exceljs) — geração (com estilo/cores por aba) e leitura do modelo Excel padronizado.
 
 ## Publicando (opcional)
 
