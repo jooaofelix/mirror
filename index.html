@@ -12,27 +12,54 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
+  /* ==========================================================================
+     CAMADA VISUAL / UX — design system corporativo.
+     Nada nesta folha de estilo altera a estrutura ou o layout do espelho de
+     DANFE (bloco "DANFE em si" logo abaixo, usado pela impressão e pelo PDF):
+     essa parte permanece byte-a-byte idêntica à versão anterior.
+     ========================================================================== */
   :root{
     --azul:#1d4d8f;
+    --azul-escuro:#123663;
+    --azul-claro:#eaf1fb;
     --cinza:#eef0f2;
+    --cinza-100:#f6f7f9;
+    --cinza-200:#eceff3;
+    --cinza-300:#dde2e8;
+    --texto:#1a1f27;
+    --texto-suave:#5b6472;
     --borda:#111;
+    --verde:#1a7d3a;
+    --verde-claro:#e6f7ea;
+    --amarelo:#9a6c00;
+    --amarelo-claro:#fff6e0;
+    --vermelho:#b00020;
+    --vermelho-claro:#fdeaec;
+    --raio:10px;
+    --raio-sm:6px;
+    --sombra-sm:0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.08);
+    --sombra-md:0 6px 16px rgba(16,24,40,.10), 0 2px 4px rgba(16,24,40,.06);
+    --sombra-lg:0 16px 36px rgba(16,24,40,.18), 0 4px 12px rgba(16,24,40,.10);
+    --transicao:160ms cubic-bezier(.4,0,.2,1);
+    --fonte: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   }
   *{box-sizing:border-box;}
   body{
     margin:0;
-    font-family:Arial, Helvetica, sans-serif;
-    background:#dfe3e8;
-    color:#111;
+    font-family:var(--fonte);
+    background:var(--cinza-100);
+    color:var(--texto);
+    -webkit-font-smoothing:antialiased;
   }
   /* ---------- layout geral ---------- */
   .app{
     display:grid;
-    grid-template-columns:380px 1fr;
+    grid-template-columns:392px 1fr;
     min-height:100vh;
   }
   .painel{
-    background:#fff;
-    border-right:1px solid #ccc;
+    background:var(--cinza-100);
+    border-right:1px solid var(--cinza-300);
     padding:14px;
     overflow-y:auto;
     max-height:100vh;
@@ -46,7 +73,7 @@
     overflow-x:auto;
   }
   .aviso-topo{
-    background:#b00020;
+    background:var(--vermelho);
     color:#fff;
     padding:10px 14px;
     font-size:13px;
@@ -83,11 +110,20 @@
   .campo-form select,
   .campo-form textarea{
     width:100%;
-    padding:5px 6px;
+    padding:6px 8px;
     font-size:12px;
-    border:1px solid #bbb;
-    border-radius:3px;
+    border:1px solid #cbd2da;
+    border-radius:var(--raio-sm);
     font-family:inherit;
+    background:#fff;
+    transition:border-color var(--transicao), box-shadow var(--transicao);
+  }
+  .campo-form input:focus,
+  .campo-form select:focus,
+  .campo-form textarea:focus{
+    outline:none;
+    border-color:var(--azul);
+    box-shadow:0 0 0 3px var(--azul-claro);
   }
   .linha2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
   .linha3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
@@ -100,37 +136,50 @@
   .btn{
     cursor:pointer;
     border:none;
-    border-radius:4px;
+    border-radius:var(--raio-sm);
     padding:8px 12px;
     font-size:12px;
     font-weight:700;
     color:#fff;
     background:var(--azul);
+    box-shadow:var(--sombra-sm);
+    transition:transform var(--transicao), box-shadow var(--transicao), filter var(--transicao), opacity var(--transicao);
   }
+  .btn:hover{ transform:translateY(-1px); box-shadow:var(--sombra-md); filter:brightness(1.06); }
+  .btn:active{ transform:translateY(0); box-shadow:var(--sombra-sm); filter:brightness(.98); }
+  .btn:disabled{ opacity:.55; cursor:not-allowed; transform:none; box-shadow:none; }
   .btn.secundario{background:#555;}
   .btn.pequeno{padding:4px 8px;font-size:11px;}
-  .btn.vermelho{background:#b00020;}
-  .btn.verde{background:#1a7d3a;}
+  .btn.vermelho{background:var(--vermelho);}
+  .btn.verde{background:var(--verde);}
   .produto-item, .dup-item{
-    border:1px solid #ddd;
-    border-radius:4px;
+    border:1px solid var(--cinza-300);
+    border-radius:var(--raio-sm);
     padding:8px;
     margin-bottom:8px;
-    background:#fafafa;
+    background:#fafbfc;
+    transition:box-shadow var(--transicao), border-color var(--transicao);
   }
+  .produto-item:hover, .dup-item:hover{ box-shadow:var(--sombra-sm); border-color:#c7cfd8; }
   .produto-item .linha3, .produto-item .linha2{margin-bottom:6px;}
   .file-drop{
-    border:2px dashed #aaa;
-    border-radius:6px;
+    border:2px dashed #b9c0c9;
+    border-radius:var(--raio-sm);
     padding:12px;
     text-align:center;
     font-size:11px;
     color:#555;
     margin-bottom:6px;
+    transition:border-color var(--transicao), background var(--transicao), transform var(--transicao);
   }
   .file-drop.recomendado{
-    border-color:#1a7d3a;
-    background:#f2fbf5;
+    border-color:var(--verde);
+    background:var(--verde-claro);
+  }
+  .file-drop.arrastando-sobre{
+    border-color:var(--azul);
+    background:var(--azul-claro);
+    transform:scale(1.015);
   }
   .file-drop .titulo-drop{
     font-weight:700;
@@ -138,18 +187,230 @@
   }
   .nota-heuristica{
     font-size:10.5px;
-    color:#8a6d00;
-    background:#fff8e1;
+    color:var(--amarelo);
+    background:var(--amarelo-claro);
     border:1px solid #ffe082;
-    border-radius:4px;
+    border-radius:var(--raio-sm);
     padding:6px 8px;
     margin-bottom:8px;
   }
-  .nota-heuristica strong.ok{color:#1a7d3a;}
+  .nota-heuristica strong.ok{color:var(--verde);}
   .nota-heuristica.sucesso{
     color:#1a5d2e;
-    background:#e9f7ee;
+    background:var(--verde-claro);
     border-color:#a8dbb6;
+  }
+
+  /* ==========================================================================
+     COMPONENTES DE UX (cards, checklist, toasts, progresso, zoom, etc.)
+     Camada nova, puramente visual/organizacional — não interfere no espelho.
+     ========================================================================== */
+
+  /* ---------- cards recolhíveis do painel ---------- */
+  .card{
+    background:#fff;
+    border:1px solid var(--cinza-300);
+    border-radius:var(--raio);
+    box-shadow:var(--sombra-sm);
+    margin-bottom:12px;
+    overflow:hidden;
+    transition:box-shadow var(--transicao);
+  }
+  .card:hover{ box-shadow:var(--sombra-md); }
+  .card-cabecalho{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:11px 14px;
+    font-weight:700;
+    font-size:12.5px;
+    color:var(--texto);
+    cursor:pointer;
+    list-style:none;
+    user-select:none;
+    background:linear-gradient(180deg,#fff,#fbfcfd);
+  }
+  .card-cabecalho::-webkit-details-marker{ display:none; }
+  .card-cabecalho .icone{ font-size:15px; }
+  .card-cabecalho .chevron{
+    margin-left:auto;
+    font-size:11px;
+    color:var(--texto-suave);
+    transition:transform var(--transicao);
+  }
+  details[open] > .card-cabecalho .chevron{ transform:rotate(90deg); }
+  .card-corpo{ padding:12px 14px 14px; border-top:1px solid var(--cinza-200); }
+  .card-corpo:empty{ display:none; }
+  .card.card-fixo .card-cabecalho{ cursor:default; }
+  .card.card-fixo .card-cabecalho .chevron{ display:none; }
+
+  /* ---------- checklist de importação ---------- */
+  .checklist{ display:flex; flex-direction:column; gap:4px; }
+  .checklist-item{
+    display:flex; align-items:center; gap:8px;
+    padding:5px 7px; border-radius:var(--raio-sm);
+    font-size:12px; color:var(--texto-suave);
+    transition:background var(--transicao), color var(--transicao);
+  }
+  .checklist-item .bolinha{
+    width:9px; height:9px; border-radius:50%; flex:none;
+    background:#c7cdd6; transition:background var(--transicao), transform var(--transicao);
+  }
+  .checklist-item.ok{ color:var(--texto); background:var(--verde-claro); }
+  .checklist-item.ok .bolinha{ background:var(--verde); }
+  .checklist-item.parcial{ color:var(--texto); background:var(--amarelo-claro); }
+  .checklist-item.parcial .bolinha{ background:var(--amarelo); }
+  .checklist-item.pendente .bolinha{ background:var(--vermelho); }
+  .checklist-item.andamento .bolinha{ background:var(--azul); animation:pulsar 1s ease-in-out infinite; }
+  .checklist-item .qtd{ margin-left:auto; font-weight:700; font-size:11px; color:var(--texto-suave); }
+  @keyframes pulsar{ 0%,100%{ opacity:1; transform:scale(1); } 50%{ opacity:.45; transform:scale(1.4); } }
+
+  /* ---------- painel de estatísticas ---------- */
+  .stats-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .stat-tile{
+    background:var(--cinza-100); border:1px solid var(--cinza-300);
+    border-radius:var(--raio-sm); padding:8px 10px;
+    transition:transform var(--transicao), box-shadow var(--transicao);
+  }
+  .stat-tile:hover{ transform:translateY(-1px); box-shadow:var(--sombra-sm); }
+  .stat-tile .rotulo{ font-size:9px; text-transform:uppercase; letter-spacing:.5px; color:var(--texto-suave); font-weight:700; }
+  .stat-tile .valor{ font-size:17px; font-weight:800; color:var(--texto); margin-top:2px; }
+  .stat-tile.destaque .valor{ color:var(--azul-escuro); }
+
+  /* ---------- banner de produtos importados ---------- */
+  .banner-produtos{
+    display:flex; justify-content:space-between; align-items:center; gap:8px;
+    background:var(--azul-claro); border:1px solid #cfe0f7;
+    border-radius:var(--raio-sm); padding:8px 10px; margin-bottom:8px; font-size:12px;
+  }
+  .banner-produtos .grupo:last-child{ text-align:right; }
+  .banner-produtos .rotulo{ font-size:9px; text-transform:uppercase; color:var(--texto-suave); font-weight:700; }
+  .banner-produtos .valor{ font-size:15px; font-weight:800; color:var(--azul-escuro); }
+
+  /* ---------- resumo do arquivo selecionado ---------- */
+  .resumo-arquivo{
+    font-size:11.5px; background:var(--cinza-100);
+    border:1px solid var(--cinza-300); border-radius:var(--raio-sm);
+    padding:8px 10px; margin-top:6px; animation:surgir .2s ease;
+  }
+  .resumo-arquivo .linha{ display:flex; justify-content:space-between; padding:2px 0; gap:8px; }
+  .resumo-arquivo .linha span:first-child{ color:var(--texto-suave); }
+  .resumo-arquivo .item-ok{ color:var(--verde); font-weight:700; }
+  .resumo-arquivo .item-falta{ color:var(--vermelho); font-weight:700; }
+  @keyframes surgir{ from{ opacity:0; transform:translateY(-4px); } to{ opacity:1; transform:translateY(0); } }
+
+  /* ---------- histórico ---------- */
+  .historico{ font-size:11.5px; display:flex; flex-direction:column; gap:8px; }
+  .historico .linha{ display:flex; flex-direction:column; color:var(--texto-suave); }
+  .historico .linha b{ color:var(--texto); font-weight:700; }
+  .historico .vazio{ color:var(--texto-suave); font-style:italic; }
+
+  /* ---------- destaque de campo recém-importado ---------- */
+  @keyframes destacarCampoFade{
+    0%{ background:#c7f2d3; box-shadow:0 0 0 3px rgba(26,125,58,.28); }
+    65%{ background:#c7f2d3; box-shadow:0 0 0 3px rgba(26,125,58,.18); }
+    100%{ background:transparent; box-shadow:none; }
+  }
+  .campo-recem-importado{ animation:destacarCampoFade 2s ease forwards; border-radius:var(--raio-sm); }
+
+  /* ---------- toasts ---------- */
+  #toast-container{
+    position:fixed; top:16px; right:16px; z-index:9999;
+    display:flex; flex-direction:column; gap:8px; max-width:360px;
+  }
+  .toast{
+    background:#fff; border-radius:var(--raio-sm); box-shadow:var(--sombra-lg);
+    padding:10px 14px; font-size:12.5px; display:flex; align-items:flex-start; gap:8px;
+    border-left:4px solid var(--azul); animation:toastEntra .22s cubic-bezier(.2,.9,.3,1.2);
+  }
+  .toast.sucesso{ border-left-color:var(--verde); }
+  .toast.erro{ border-left-color:var(--vermelho); }
+  .toast.aviso{ border-left-color:var(--amarelo); }
+  .toast .icone{ font-size:15px; line-height:1.1; }
+  .toast .msg{ line-height:1.35; }
+  .toast.saindo{ animation:toastSai .18s ease forwards; }
+  @keyframes toastEntra{ from{ opacity:0; transform:translateX(24px); } to{ opacity:1; transform:translateX(0); } }
+  @keyframes toastSai{ from{ opacity:1; transform:translateX(0); } to{ opacity:0; transform:translateX(24px); } }
+
+  /* ---------- overlay de progresso de importação ---------- */
+  #progresso-overlay{
+    position:fixed; inset:0; background:rgba(15,23,42,.45);
+    display:flex; align-items:center; justify-content:center; z-index:9998;
+    opacity:0; pointer-events:none; transition:opacity var(--transicao);
+  }
+  #progresso-overlay.ativo{ opacity:1; pointer-events:all; }
+  .progresso-card{
+    background:#fff; border-radius:var(--raio); box-shadow:var(--sombra-lg);
+    padding:20px 24px; width:320px; max-width:88vw;
+    animation:surgirModal .2s cubic-bezier(.2,.9,.3,1.2);
+  }
+  @keyframes surgirModal{ from{ opacity:0; transform:scale(.94); } to{ opacity:1; transform:scale(1); } }
+  .progresso-titulo{ font-weight:700; font-size:14px; margin-bottom:12px; display:flex; align-items:center; gap:8px; color:var(--texto); }
+  .progresso-barra-fundo{ height:9px; border-radius:6px; background:var(--cinza-200); overflow:hidden; margin-bottom:14px; }
+  .progresso-barra{ height:100%; background:linear-gradient(90deg, var(--azul), #4a86d6); width:0%; transition:width .25s ease; border-radius:6px; }
+  .progresso-passos{ display:flex; flex-direction:column; gap:6px; font-size:12px; }
+  .progresso-passo{ display:flex; align-items:center; gap:8px; color:var(--texto-suave); transition:color var(--transicao); }
+  .progresso-passo.ok{ color:var(--verde); }
+  .progresso-passo.andamento{ color:var(--azul); font-weight:700; }
+  .progresso-passo .marca{ width:16px; text-align:center; }
+
+  /* ---------- loader do PDF ---------- */
+  #loader-pdf{
+    position:fixed; inset:0; background:rgba(15,23,42,.35);
+    display:flex; align-items:center; justify-content:center; z-index:9998;
+    opacity:0; pointer-events:none; transition:opacity var(--transicao);
+  }
+  #loader-pdf.ativo{ opacity:1; pointer-events:all; }
+  .loader-caixa{
+    background:#fff; border-radius:var(--raio); padding:22px 28px;
+    display:flex; flex-direction:column; align-items:center; gap:12px;
+    box-shadow:var(--sombra-lg); font-weight:700; font-size:13px; color:var(--texto);
+  }
+  .spinner{
+    width:36px; height:36px; border-radius:50%;
+    border:4px solid var(--cinza-200); border-top-color:var(--azul);
+    animation:girar .8s linear infinite;
+  }
+  @keyframes girar{ to{ transform:rotate(360deg); } }
+
+  /* ---------- controles de zoom do espelho ---------- */
+  .zoom-controles{
+    display:flex; gap:2px; align-items:center; background:#fff;
+    border:1px solid var(--cinza-300); border-radius:999px; padding:4px;
+    box-shadow:var(--sombra-sm);
+  }
+  .zoom-controles button{
+    border:none; background:transparent; padding:4px 10px; border-radius:999px;
+    font-size:11px; font-weight:700; cursor:pointer; color:var(--texto-suave);
+    transition:background var(--transicao), color var(--transicao);
+  }
+  .zoom-controles button.ativo{ background:var(--azul); color:#fff; }
+  .zoom-controles button:hover:not(.ativo){ background:var(--cinza-200); }
+  .zoom-wrapper{ transition:transform .18s ease; transform-origin:top center; }
+
+  /* ---------- botão de recolher painel (telas pequenas) ---------- */
+  #toggle-painel{
+    display:none; position:fixed; top:64px; left:10px; z-index:501;
+    border:none; background:var(--azul); color:#fff; width:38px; height:38px;
+    border-radius:50%; font-size:16px; box-shadow:var(--sombra-md); cursor:pointer;
+  }
+  #fundo-painel-mobile{
+    display:none; position:fixed; inset:0; background:rgba(15,23,42,.4); z-index:499;
+  }
+  #fundo-painel-mobile.ativo{ display:block; }
+
+  /* ---------- responsivo ---------- */
+  @media (max-width: 900px){
+    .app{ grid-template-columns:1fr; }
+    .painel{
+      position:fixed; top:0; left:0; bottom:0; width:min(360px,88vw);
+      z-index:500; transform:translateX(-100%); transition:transform .22s ease;
+      box-shadow:var(--sombra-lg);
+    }
+    .painel.aberto{ transform:translateX(0); }
+    #toggle-painel{ display:flex; align-items:center; justify-content:center; }
+    .visual{ padding:12px; }
+    #toast-container{ left:12px; right:12px; max-width:none; }
   }
 
   /* ---------- DANFE em si ---------- */
@@ -251,6 +512,13 @@
     .visual{padding:0;}
     #danfe-page{box-shadow:none;margin:0;}
   }
+
+  /* Elementos novos de UX nunca aparecem na impressão nem afetam o zoom do PDF/impressão. */
+  @media print{
+    #toast-container, #progresso-overlay, #loader-pdf, .zoom-controles,
+    #toggle-painel, #fundo-painel-mobile { display:none !important; }
+    .zoom-wrapper{ transform:none !important; }
+  }
 </style>
 </head>
 <body>
@@ -262,171 +530,265 @@
 
 <div class="app">
   <!-- ===================== PAINEL DE FORMULÁRIO ===================== -->
-  <div class="painel">
-    <div class="botoes-topo">
-      <button class="btn verde" onclick="baixarPDF()">⬇ Baixar PDF</button>
-      <button class="btn secundario" onclick="window.print()">🖨 Imprimir</button>
-      <button class="btn vermelho" onclick="limparTudo()">Limpar</button>
-    </div>
-    <div class="nota-heuristica" style="margin-top:-2px;">
-      ℹ Nenhum campo é obrigatório. Você pode baixar o PDF ou imprimir a qualquer momento, mesmo em branco ou com importação parcial — nada aqui bloqueia a geração do espelho.
-    </div>
+  <button id="toggle-painel" type="button" onclick="alternarPainelMobile()" aria-label="Abrir painel" title="Abrir painel">☰</button>
+  <div id="fundo-painel-mobile" onclick="alternarPainelMobile(false)"></div>
 
-    <h2 class="titulo-secao">Importar dados (opcional)</h2>
+  <div class="painel" id="painel-lateral">
 
-    <div class="file-drop">
-      <div class="titulo-drop">XML de NFe</div>
-      <div>Preenchimento automático completo e exato.</div>
-      <input type="file" id="input-xml" accept=".xml" onchange="handleXml(event)">
-    </div>
-
-    <div class="file-drop recomendado">
-      <div class="titulo-drop">✅ Modelo Excel (recomendado)</div>
-      <div>Planilha com uma aba separada para cada assunto — uma só para os dados da empresa, outra só para os produtos, etc. — para não ter como confundir onde preencher o quê. Baixe, preencha e reenvie.</div>
-      <div style="margin:8px 0;">
-        <button class="btn pequeno verde" type="button" onclick="baixarModeloExcel()">⬇ Baixar modelo Excel</button>
+    <!-- ---------- Exportação (sempre visível) ---------- -->
+    <div class="card card-fixo">
+      <div class="card-cabecalho"><span class="icone">📑</span> Exportação</div>
+      <div class="card-corpo">
+        <div class="botoes-topo">
+          <button class="btn verde" onclick="baixarPDFComUI()">⬇ Baixar PDF</button>
+          <button class="btn secundario" onclick="imprimirComUI()">🖨 Imprimir</button>
+          <button class="btn vermelho" onclick="limparTudo()">Limpar</button>
+        </div>
+        <div class="nota-heuristica" style="margin-top:-2px;margin-bottom:0;">
+          ℹ Nenhum campo é obrigatório. Você pode baixar o PDF ou imprimir a qualquer momento, mesmo em branco ou com importação parcial — nada aqui bloqueia a geração do espelho.
+        </div>
       </div>
-      <input type="file" id="input-excel" accept=".xlsx" onchange="handleExcel(event)">
-      <div id="excel-status"></div>
     </div>
 
-    <div class="file-drop">
-      <div class="titulo-drop">PDF / Word / TXT</div>
-      <div>Tenta extrair alguns dados por busca de padrões (best-effort).</div>
-      <input type="file" id="input-doc" accept=".pdf,.docx,.doc,.txt" onchange="handleDoc(event)">
-      <div id="doc-status"></div>
-    </div>
-
-    <div class="nota-heuristica">
-      ⚠ A extração de PDF/Word/TXT é uma busca por padrões (CNPJ, IE, chave de 44 dígitos, valores, datas, endereços) e <strong>nunca é garantida</strong> — o layout de cada documento é diferente. Sempre confira e complete manualmente os campos abaixo.<br><br>
-      <strong class="ok">✅ Para importação 100% confiável</strong>, use o <strong>modelo Excel</strong> acima: ele tem colunas fixas e é lido de forma exata, sem heurística.
-    </div>
-
-    <h2 class="titulo-secao">Emitente</h2>
-    <div class="campo-form"><label>Razão Social</label><input id="e_razao" oninput="render()" value="EMPRESA MODELO LTDA"></div>
-    <div class="campo-form"><label>Endereço</label><input id="e_endereco" oninput="render()" value="RUA EXEMPLO, 123"></div>
-    <div class="linha3">
-      <div class="campo-form"><label>Bairro</label><input id="e_bairro" oninput="render()" value="CENTRO"></div>
-      <div class="campo-form"><label>CEP</label><input id="e_cep" oninput="render()" value="00000-000"></div>
-      <div class="campo-form"><label>Fone/Fax</label><input id="e_fone" oninput="render()" value="(00) 0000-0000"></div>
-    </div>
-    <div class="linha2">
-      <div class="campo-form"><label>Município</label><input id="e_municipio" oninput="render()" value="SÃO PAULO"></div>
-      <div class="campo-form"><label>UF</label><input id="e_uf" oninput="render()" value="SP"></div>
-    </div>
-    <div class="linha3">
-      <div class="campo-form"><label>CNPJ</label><input id="e_cnpj" oninput="render()" value="00.000.000/0001-00"></div>
-      <div class="campo-form"><label>Inscr. Estadual</label><input id="e_ie" oninput="render()" value="000.000.000.000"></div>
-      <div class="campo-form"><label>IE Subst. Trib.</label><input id="e_iest" oninput="render()" value=""></div>
-    </div>
-
-    <h2 class="titulo-secao">Nota / Chave de acesso</h2>
-    <div class="linha3">
-      <div class="campo-form"><label>Natureza da Operação</label><input id="n_natureza" oninput="render()" value="VENDA DE MERCADORIA"></div>
-      <div class="campo-form"><label>Número</label><input id="n_numero" oninput="render()" value="000000001"></div>
-      <div class="campo-form"><label>Série</label><input id="n_serie" oninput="render()" value="1"></div>
-    </div>
-    <div class="linha3">
-      <div class="campo-form"><label>Tipo</label>
-        <select id="n_tipo" onchange="render()">
-          <option value="0">0 - Entrada</option>
-          <option value="1" selected>1 - Saída</option>
-        </select>
+    <!-- ---------- Status: dashboard + checklist (sempre visível) ---------- -->
+    <div class="card card-fixo">
+      <div class="card-cabecalho"><span class="icone">📈</span> Status</div>
+      <div class="card-corpo">
+        <div class="stats-grid" id="stats-dashboard"></div>
+        <div class="checklist" id="checklist-importacao" style="margin-top:10px;"></div>
       </div>
-      <div class="campo-form"><label>Data Emissão</label><input id="n_dataemissao" type="date" oninput="render()"></div>
-      <div class="campo-form"><label>Data Saída/Entrada</label><input id="n_datasaida" type="date" oninput="render()"></div>
     </div>
-    <div class="campo-form"><label>Chave de Acesso (44 dígitos)</label><input id="n_chave" oninput="render()" maxlength="44" value="00000000000000000000000000000000000000000000"></div>
-    <div class="campo-form"><label>Protocolo de Autorização</label><input id="n_protocolo" oninput="render()" value="000000000000000 - 01/01/2026 00:00:00"></div>
 
-    <h2 class="titulo-secao">Destinatário / Remetente</h2>
-    <div class="campo-form"><label>Nome/Razão Social</label><input id="d_nome" oninput="render()" value="CLIENTE MODELO"></div>
-    <div class="linha2">
-      <div class="campo-form"><label>CNPJ/CPF</label><input id="d_cnpj" oninput="render()" value="000.000.000-00"></div>
-      <div class="campo-form"><label>Inscr. Estadual</label><input id="d_ie" oninput="render()" value=""></div>
-    </div>
-    <div class="campo-form"><label>Endereço</label><input id="d_endereco" oninput="render()" value=""></div>
-    <div class="linha3">
-      <div class="campo-form"><label>Bairro</label><input id="d_bairro" oninput="render()" value=""></div>
-      <div class="campo-form"><label>CEP</label><input id="d_cep" oninput="render()" value=""></div>
-      <div class="campo-form"><label>Fone/Fax</label><input id="d_fone" oninput="render()" value=""></div>
-    </div>
-    <div class="linha2">
-      <div class="campo-form"><label>Município</label><input id="d_municipio" oninput="render()" value=""></div>
-      <div class="campo-form"><label>UF</label><input id="d_uf" oninput="render()" value=""></div>
-    </div>
-    <div class="campo-form"><label>Hora da Saída</label><input id="d_hora" type="time" oninput="render()"></div>
+    <!-- ---------- Arquivos (importação) ---------- -->
+    <details class="card" open>
+      <summary class="card-cabecalho"><span class="icone">📂</span> Arquivos <span class="chevron">▶</span></summary>
+      <div class="card-corpo">
 
-    <h2 class="titulo-secao">Fatura / Duplicatas</h2>
-    <div id="lista-duplicatas"></div>
-    <button class="btn pequeno" onclick="addDuplicata()">+ Duplicata</button>
+        <div class="file-drop" id="dropzone-xml">
+          <div class="titulo-drop">📄 XML de NFe</div>
+          <div>Preenchimento automático completo e exato. Arraste o XML aqui ou clique para selecionar.</div>
+          <input type="file" id="input-xml" accept=".xml" onchange="handleXmlComUI(event)">
+          <div id="resumo-xml"></div>
+        </div>
 
-    <h2 class="titulo-secao">Transportador / Volumes</h2>
-    <div class="campo-form"><label>Nome/Razão Social</label><input id="t_nome" oninput="render()" value=""></div>
-    <div class="linha3">
-      <div class="campo-form"><label>Frete por conta</label>
-        <select id="t_frete" onchange="render()">
-          <option value="0">0 - Emitente</option>
-          <option value="1">1 - Destinatário</option>
-          <option value="9">9 - Sem frete</option>
-        </select>
+        <div class="file-drop recomendado" id="dropzone-excel">
+          <div class="titulo-drop">📊 Modelo Excel (recomendado)</div>
+          <div>Planilha com uma aba separada para cada assunto — uma só para os dados da empresa, outra só para os produtos, etc. — para não ter como confundir onde preencher o quê. Arraste o Excel aqui, ou baixe, preencha e reenvie.</div>
+          <div style="margin:8px 0;">
+            <button class="btn pequeno verde" type="button" onclick="baixarModeloExcel()">⬇ Baixar modelo Excel</button>
+          </div>
+          <input type="file" id="input-excel" accept=".xlsx" onchange="handleExcelComUI(event)">
+          <div id="resumo-excel"></div>
+          <div id="excel-status"></div>
+        </div>
+
+        <div class="file-drop" id="dropzone-doc">
+          <div class="titulo-drop">PDF / Word / TXT</div>
+          <div>Tenta extrair alguns dados por busca de padrões (best-effort).</div>
+          <input type="file" id="input-doc" accept=".pdf,.docx,.doc,.txt" onchange="handleDocComUI(event)">
+          <div id="resumo-doc"></div>
+          <div id="doc-status"></div>
+        </div>
+
+        <div class="nota-heuristica">
+          ⚠ A extração de PDF/Word/TXT é uma busca por padrões (CNPJ, IE, chave de 44 dígitos, valores, datas, endereços) e <strong>nunca é garantida</strong> — o layout de cada documento é diferente. Sempre confira e complete manualmente os campos abaixo.<br><br>
+          <strong class="ok">✅ Para importação 100% confiável</strong>, use o <strong>modelo Excel</strong> acima: ele tem colunas fixas e é lido de forma exata, sem heurística.
+        </div>
       </div>
-      <div class="campo-form"><label>Placa</label><input id="t_placa" oninput="render()" value=""></div>
-      <div class="campo-form"><label>UF Placa</label><input id="t_ufplaca" oninput="render()" value=""></div>
-    </div>
-    <div class="linha2">
-      <div class="campo-form"><label>CNPJ/CPF</label><input id="t_cnpj" oninput="render()" value=""></div>
-      <div class="campo-form"><label>Inscr. Estadual</label><input id="t_ie" oninput="render()" value=""></div>
-    </div>
-    <div class="campo-form"><label>Endereço</label><input id="t_endereco" oninput="render()" value=""></div>
-    <div class="linha2">
-      <div class="campo-form"><label>Município</label><input id="t_municipio" oninput="render()" value=""></div>
-      <div class="campo-form"><label>UF</label><input id="t_uf" oninput="render()" value=""></div>
-    </div>
-    <div class="linha3">
-      <div class="campo-form"><label>Quantidade</label><input id="t_qtd" oninput="render()" value=""></div>
-      <div class="campo-form"><label>Espécie</label><input id="t_especie" oninput="render()" value=""></div>
-      <div class="campo-form"><label>Marca</label><input id="t_marca" oninput="render()" value=""></div>
-    </div>
-    <div class="linha3">
-      <div class="campo-form"><label>Numeração</label><input id="t_numeracao" oninput="render()" value=""></div>
-      <div class="campo-form"><label>Peso Bruto</label><input id="t_pesobruto" oninput="render()" value=""></div>
-      <div class="campo-form"><label>Peso Líquido</label><input id="t_pesoliq" oninput="render()" value=""></div>
-    </div>
+    </details>
 
-    <h2 class="titulo-secao">Produtos / Serviços</h2>
-    <div id="lista-produtos"></div>
-    <button class="btn pequeno" onclick="addProduto()">+ Produto</button>
-    <button class="btn pequeno secundario" onclick="recalcularTotais()">Recalcular totais</button>
+    <!-- ---------- Histórico ---------- -->
+    <details class="card">
+      <summary class="card-cabecalho"><span class="icone">🕘</span> Histórico <span class="chevron">▶</span></summary>
+      <div class="card-corpo">
+        <div class="historico" id="historico-painel"></div>
+      </div>
+    </details>
 
-    <h2 class="titulo-secao">Cálculo do Imposto (totais)</h2>
-    <div class="linha3">
-      <div class="campo-form"><label>Base Cálc. ICMS</label><input id="i_baseicms" oninput="render()" value="0,00"></div>
-      <div class="campo-form"><label>Valor ICMS</label><input id="i_valoricms" oninput="render()" value="0,00"></div>
-      <div class="campo-form"><label>Base ICMS ST</label><input id="i_baseicmsst" oninput="render()" value="0,00"></div>
-    </div>
-    <div class="linha3">
-      <div class="campo-form"><label>Valor ICMS ST</label><input id="i_valoricmsst" oninput="render()" value="0,00"></div>
-      <div class="campo-form"><label>Total Produtos</label><input id="i_totalprodutos" oninput="render()" value="0,00"></div>
-      <div class="campo-form"><label>Valor Frete</label><input id="i_frete" oninput="render()" value="0,00"></div>
-    </div>
-    <div class="linha3">
-      <div class="campo-form"><label>Valor Seguro</label><input id="i_seguro" oninput="render()" value="0,00"></div>
-      <div class="campo-form"><label>Desconto</label><input id="i_desconto" oninput="render()" value="0,00"></div>
-      <div class="campo-form"><label>Outras Desp.</label><input id="i_outras" oninput="render()" value="0,00"></div>
-    </div>
-    <div class="linha2">
-      <div class="campo-form"><label>Total IPI</label><input id="i_ipi" oninput="render()" value="0,00"></div>
-      <div class="campo-form"><label>Total da Nota</label><input id="i_totalnota" oninput="render()" value="0,00"></div>
-    </div>
+    <!-- ---------- Emitente ---------- -->
+    <details class="card" open>
+      <summary class="card-cabecalho"><span class="icone">🏢</span> Emitente <span class="chevron">▶</span></summary>
+      <div class="card-corpo">
+        <div class="campo-form"><label>Razão Social</label><input id="e_razao" oninput="render()" value="EMPRESA MODELO LTDA"></div>
+        <div class="campo-form"><label>Endereço</label><input id="e_endereco" oninput="render()" value="RUA EXEMPLO, 123"></div>
+        <div class="linha3">
+          <div class="campo-form"><label>Bairro</label><input id="e_bairro" oninput="render()" value="CENTRO"></div>
+          <div class="campo-form"><label>CEP</label><input id="e_cep" oninput="render()" value="00000-000"></div>
+          <div class="campo-form"><label>Fone/Fax</label><input id="e_fone" oninput="render()" value="(00) 0000-0000"></div>
+        </div>
+        <div class="linha2">
+          <div class="campo-form"><label>Município</label><input id="e_municipio" oninput="render()" value="SÃO PAULO"></div>
+          <div class="campo-form"><label>UF</label><input id="e_uf" oninput="render()" value="SP"></div>
+        </div>
+        <div class="linha3">
+          <div class="campo-form"><label>CNPJ</label><input id="e_cnpj" oninput="render()" value="00.000.000/0001-00"></div>
+          <div class="campo-form"><label>Inscr. Estadual</label><input id="e_ie" oninput="render()" value="000.000.000.000"></div>
+          <div class="campo-form"><label>IE Subst. Trib.</label><input id="e_iest" oninput="render()" value=""></div>
+        </div>
+      </div>
+    </details>
 
-    <h2 class="titulo-secao">Dados Adicionais</h2>
-    <div class="campo-form"><label>Informações Complementares</label><textarea id="a_info" rows="3" oninput="render()">Documento gerado apenas como modelo visual — sem validade fiscal.</textarea></div>
-    <div class="campo-form"><label>Reservado ao Fisco</label><textarea id="a_fisco" rows="2" oninput="render()"></textarea></div>
+    <!-- ---------- Nota / Chave de acesso ---------- -->
+    <details class="card">
+      <summary class="card-cabecalho"><span class="icone">🧾</span> Nota / Chave de acesso <span class="chevron">▶</span></summary>
+      <div class="card-corpo">
+        <div class="linha3">
+          <div class="campo-form"><label>Natureza da Operação</label><input id="n_natureza" oninput="render()" value="VENDA DE MERCADORIA"></div>
+          <div class="campo-form"><label>Número</label><input id="n_numero" oninput="render()" value="000000001"></div>
+          <div class="campo-form"><label>Série</label><input id="n_serie" oninput="render()" value="1"></div>
+        </div>
+        <div class="linha3">
+          <div class="campo-form"><label>Tipo</label>
+            <select id="n_tipo" onchange="render()">
+              <option value="0">0 - Entrada</option>
+              <option value="1" selected>1 - Saída</option>
+            </select>
+          </div>
+          <div class="campo-form"><label>Data Emissão</label><input id="n_dataemissao" type="date" oninput="render()"></div>
+          <div class="campo-form"><label>Data Saída/Entrada</label><input id="n_datasaida" type="date" oninput="render()"></div>
+        </div>
+        <div class="campo-form"><label>Chave de Acesso (44 dígitos)</label><input id="n_chave" oninput="render()" maxlength="44" value="00000000000000000000000000000000000000000000"></div>
+        <div class="campo-form"><label>Protocolo de Autorização</label><input id="n_protocolo" oninput="render()" value="000000000000000 - 01/01/2026 00:00:00"></div>
+      </div>
+    </details>
+
+    <!-- ---------- Destinatário / Remetente ---------- -->
+    <details class="card">
+      <summary class="card-cabecalho"><span class="icone">🧑‍💼</span> Destinatário / Remetente <span class="chevron">▶</span></summary>
+      <div class="card-corpo">
+        <div class="campo-form"><label>Nome/Razão Social</label><input id="d_nome" oninput="render()" value="CLIENTE MODELO"></div>
+        <div class="linha2">
+          <div class="campo-form"><label>CNPJ/CPF</label><input id="d_cnpj" oninput="render()" value="000.000.000-00"></div>
+          <div class="campo-form"><label>Inscr. Estadual</label><input id="d_ie" oninput="render()" value=""></div>
+        </div>
+        <div class="campo-form"><label>Endereço</label><input id="d_endereco" oninput="render()" value=""></div>
+        <div class="linha3">
+          <div class="campo-form"><label>Bairro</label><input id="d_bairro" oninput="render()" value=""></div>
+          <div class="campo-form"><label>CEP</label><input id="d_cep" oninput="render()" value=""></div>
+          <div class="campo-form"><label>Fone/Fax</label><input id="d_fone" oninput="render()" value=""></div>
+        </div>
+        <div class="linha2">
+          <div class="campo-form"><label>Município</label><input id="d_municipio" oninput="render()" value=""></div>
+          <div class="campo-form"><label>UF</label><input id="d_uf" oninput="render()" value=""></div>
+        </div>
+        <div class="campo-form"><label>Hora da Saída</label><input id="d_hora" type="time" oninput="render()"></div>
+      </div>
+    </details>
+
+    <!-- ---------- Fatura / Duplicatas ---------- -->
+    <details class="card">
+      <summary class="card-cabecalho"><span class="icone">💳</span> Fatura / Duplicatas <span class="chevron">▶</span></summary>
+      <div class="card-corpo">
+        <div id="lista-duplicatas"></div>
+        <button class="btn pequeno" onclick="addDuplicata()">+ Duplicata</button>
+      </div>
+    </details>
+
+    <!-- ---------- Transportador / Volumes ---------- -->
+    <details class="card">
+      <summary class="card-cabecalho"><span class="icone">🚚</span> Transportador / Volumes <span class="chevron">▶</span></summary>
+      <div class="card-corpo">
+        <div class="campo-form"><label>Nome/Razão Social</label><input id="t_nome" oninput="render()" value=""></div>
+        <div class="linha3">
+          <div class="campo-form"><label>Frete por conta</label>
+            <select id="t_frete" onchange="render()">
+              <option value="0">0 - Emitente</option>
+              <option value="1">1 - Destinatário</option>
+              <option value="9">9 - Sem frete</option>
+            </select>
+          </div>
+          <div class="campo-form"><label>Placa</label><input id="t_placa" oninput="render()" value=""></div>
+          <div class="campo-form"><label>UF Placa</label><input id="t_ufplaca" oninput="render()" value=""></div>
+        </div>
+        <div class="linha2">
+          <div class="campo-form"><label>CNPJ/CPF</label><input id="t_cnpj" oninput="render()" value=""></div>
+          <div class="campo-form"><label>Inscr. Estadual</label><input id="t_ie" oninput="render()" value=""></div>
+        </div>
+        <div class="campo-form"><label>Endereço</label><input id="t_endereco" oninput="render()" value=""></div>
+        <div class="linha2">
+          <div class="campo-form"><label>Município</label><input id="t_municipio" oninput="render()" value=""></div>
+          <div class="campo-form"><label>UF</label><input id="t_uf" oninput="render()" value=""></div>
+        </div>
+        <div class="linha3">
+          <div class="campo-form"><label>Quantidade</label><input id="t_qtd" oninput="render()" value=""></div>
+          <div class="campo-form"><label>Espécie</label><input id="t_especie" oninput="render()" value=""></div>
+          <div class="campo-form"><label>Marca</label><input id="t_marca" oninput="render()" value=""></div>
+        </div>
+        <div class="linha3">
+          <div class="campo-form"><label>Numeração</label><input id="t_numeracao" oninput="render()" value=""></div>
+          <div class="campo-form"><label>Peso Bruto</label><input id="t_pesobruto" oninput="render()" value=""></div>
+          <div class="campo-form"><label>Peso Líquido</label><input id="t_pesoliq" oninput="render()" value=""></div>
+        </div>
+      </div>
+    </details>
+
+    <!-- ---------- Produtos / Serviços ---------- -->
+    <details class="card" open>
+      <summary class="card-cabecalho"><span class="icone">📦</span> Produtos / Serviços <span class="chevron">▶</span></summary>
+      <div class="card-corpo">
+        <div class="banner-produtos" id="banner-produtos">
+          <div class="grupo">
+            <div class="rotulo">Produtos importados</div>
+            <div class="valor" id="banner-produtos-qtd">0 itens</div>
+          </div>
+          <div class="grupo">
+            <div class="rotulo">Valor Total</div>
+            <div class="valor" id="banner-produtos-total">R$ 0,00</div>
+          </div>
+        </div>
+        <div id="lista-produtos"></div>
+        <button class="btn pequeno" onclick="addProduto()">+ Produto</button>
+        <button class="btn pequeno secundario" onclick="recalcularTotais()">Recalcular totais</button>
+      </div>
+    </details>
+
+    <!-- ---------- Cálculo do Imposto (totais) ---------- -->
+    <details class="card">
+      <summary class="card-cabecalho"><span class="icone">💰</span> Cálculo do Imposto (totais) <span class="chevron">▶</span></summary>
+      <div class="card-corpo">
+        <div class="linha3">
+          <div class="campo-form"><label>Base Cálc. ICMS</label><input id="i_baseicms" oninput="render()" value="0,00"></div>
+          <div class="campo-form"><label>Valor ICMS</label><input id="i_valoricms" oninput="render()" value="0,00"></div>
+          <div class="campo-form"><label>Base ICMS ST</label><input id="i_baseicmsst" oninput="render()" value="0,00"></div>
+        </div>
+        <div class="linha3">
+          <div class="campo-form"><label>Valor ICMS ST</label><input id="i_valoricmsst" oninput="render()" value="0,00"></div>
+          <div class="campo-form"><label>Total Produtos</label><input id="i_totalprodutos" oninput="render()" value="0,00"></div>
+          <div class="campo-form"><label>Valor Frete</label><input id="i_frete" oninput="render()" value="0,00"></div>
+        </div>
+        <div class="linha3">
+          <div class="campo-form"><label>Valor Seguro</label><input id="i_seguro" oninput="render()" value="0,00"></div>
+          <div class="campo-form"><label>Desconto</label><input id="i_desconto" oninput="render()" value="0,00"></div>
+          <div class="campo-form"><label>Outras Desp.</label><input id="i_outras" oninput="render()" value="0,00"></div>
+        </div>
+        <div class="linha2">
+          <div class="campo-form"><label>Total IPI</label><input id="i_ipi" oninput="render()" value="0,00"></div>
+          <div class="campo-form"><label>Total da Nota</label><input id="i_totalnota" oninput="render()" value="0,00"></div>
+        </div>
+      </div>
+    </details>
+
+    <!-- ---------- Dados Adicionais ---------- -->
+    <details class="card">
+      <summary class="card-cabecalho"><span class="icone">📝</span> Dados Adicionais <span class="chevron">▶</span></summary>
+      <div class="card-corpo">
+        <div class="campo-form"><label>Informações Complementares</label><textarea id="a_info" rows="3" oninput="render()">Documento gerado apenas como modelo visual — sem validade fiscal.</textarea></div>
+        <div class="campo-form"><label>Reservado ao Fisco</label><textarea id="a_fisco" rows="2" oninput="render()"></textarea></div>
+      </div>
+    </details>
   </div>
 
   <!-- ===================== VISUAL DA DANFE ===================== -->
   <div class="visual">
+    <div class="zoom-controles" id="zoom-controles">
+      <button type="button" data-zoom="50" onclick="definirZoom(50)">50%</button>
+      <button type="button" data-zoom="75" onclick="definirZoom(75)">75%</button>
+      <button type="button" data-zoom="100" class="ativo" onclick="definirZoom(100)">100%</button>
+      <button type="button" data-zoom="125" onclick="definirZoom(125)">125%</button>
+      <button type="button" data-zoom="150" onclick="definirZoom(150)">150%</button>
+      <button type="button" data-zoom="200" onclick="definirZoom(200)">200%</button>
+    </div>
+    <div class="zoom-wrapper" id="zoom-wrapper">
     <div id="danfe-page">
       <div class="marca-dagua"><span>SEM VALOR FISCAL &nbsp; • &nbsp; MODELO &nbsp; • &nbsp; SEM VALOR FISCAL</span></div>
 
@@ -591,6 +953,25 @@
       </table>
 
     </div>
+    </div>
+  </div>
+</div>
+
+<!-- ---------- contêineres globais de UX (toasts, progresso, loader do PDF) ---------- -->
+<div id="toast-container"></div>
+
+<div id="progresso-overlay">
+  <div class="progresso-card">
+    <div class="progresso-titulo"><span>⏳</span> <span id="progresso-titulo-texto">Importando arquivo...</span></div>
+    <div class="progresso-barra-fundo"><div class="progresso-barra" id="progresso-barra"></div></div>
+    <div class="progresso-passos" id="progresso-passos"></div>
+  </div>
+</div>
+
+<div id="loader-pdf">
+  <div class="loader-caixa">
+    <div class="spinner"></div>
+    <div>Gerando PDF...</div>
   </div>
 </div>
 
@@ -811,6 +1192,8 @@ function render(){
 
   set('ad_info', g('a_info'));
   set('ad_fisco', g('a_fisco'));
+
+  atualizarPainelEstatisticas(); // camada de UX (dashboard + contador de produtos) — não afeta os valores acima
 }
 
 // ---------- importar XML de NFe ----------
@@ -946,9 +1329,15 @@ function handleXml(ev){
       renderFormularioDuplicatas();
 
       render();
-      alert('XML importado! Confira os dados antes de baixar o PDF.');
+      // ---- camada de UX (item 10 do pedido): alert() trocado por toast + destaque dos campos preenchidos ----
+      destacarCampos(XML_CAMPOS_CONHECIDOS.filter(id=>{ const el = document.getElementById(id); return el && el.value; }));
+      atualizarChecklistPosXml();
+      registrarHistorico('xml', file.name);
+      fecharProgresso();
+      mostrarToast('sucesso', 'XML importado! Confira os dados antes de baixar o PDF.');
     }catch(err){
-      alert('Não foi possível interpretar este XML como uma NFe padrão. Preencha manualmente.');
+      fecharProgresso();
+      mostrarToast('erro', 'XML inválido: não foi possível interpretar este arquivo como uma NFe padrão. Preencha manualmente.');
       console.error(err);
     }
   };
@@ -1427,10 +1816,11 @@ function localizarColunasChaveValor(linhas){
 
 function lerAbaChaveValor(matriz, def, faltantes){
   let lidos = 0;
+  const idsPreenchidos = []; // usado apenas pela camada de UX para destacar campos (não afeta a leitura)
   const nomeAba = encontrarNomeAba(matriz, def.chave);
   if(!nomeAba){
     def.campos.forEach(([label])=> faltantes.push(`${label} (aba de "${def.tituloCurto}" não encontrada no arquivo)`));
-    return lidos;
+    return { lidos, ids: idsPreenchidos };
   }
   const linhas = matriz[nomeAba];
   const {linha, campoCol, valorCol} = localizarColunasChaveValor(linhas);
@@ -1446,13 +1836,14 @@ function lerAbaChaveValor(matriz, def, faltantes){
       const el = document.getElementById(info.id);
       if(el) el.value = valorFinal;
       preenchidos.add(info.label);
+      idsPreenchidos.push(info.id);
       lidos++;
     }
   }
   def.campos.forEach(([label])=>{
     if(!preenchidos.has(label)) faltantes.push(`${label} (não preenchido na aba de "${def.tituloCurto}")`);
   });
-  return lidos;
+  return { lidos, ids: idsPreenchidos };
 }
 
 // ==========================================================================
@@ -1561,8 +1952,15 @@ async function handleExcel(ev){
   // A partir daqui o arquivo abriu com sucesso. Qualquer aba/campo ausente é só um aviso.
   const faltantes = [];
   let camposLidos = 0;
+  const idsDestacar = []; // camada de UX: quais campos acender como "recém-importados"
   try{
-    MODELO_SHEETS.forEach(def=>{ camposLidos += lerAbaChaveValor(matriz, def, faltantes); });
+    MODELO_SHEETS.forEach(def=>{
+      const { lidos, ids } = lerAbaChaveValor(matriz, def, faltantes);
+      camposLidos += lidos;
+      idsDestacar.push(...ids);
+      atualizarPassoProgresso(def.chave, 'ok');
+      atualizarChecklistItem(def.chave, lidos > 0 ? 'ok' : 'parcial');
+    });
   }catch(erro){
     console.error('[Importação Excel] Erro inesperado ao interpretar os dados cadastrais — prosseguindo mesmo assim.', erro);
   }
@@ -1571,11 +1969,15 @@ async function handleExcel(ev){
   try{
     ({ linhas: linhasProdutos, enviada: produtosEnviados, cabecalhoEncontrado: cabecalhoProdutos } = lerAbaTabelaProdutos(matriz));
   }catch(erro){ console.error('[Importação Excel] Erro ao ler a aba de produtos — prosseguindo mesmo assim.', erro); }
+  atualizarPassoProgresso('produtos', 'ok');
+  atualizarChecklistItem('produtos', linhasProdutos.length > 0 ? 'ok' : 'parcial', linhasProdutos.length);
 
   let linhasDuplicatas = [], duplicatasEnviadas = false;
   try{
     ({ linhas: linhasDuplicatas, enviada: duplicatasEnviadas } = lerAbaTabelaDuplicatas(matriz));
   }catch(erro){ console.error('[Importação Excel] Erro ao ler a aba de duplicatas — prosseguindo mesmo assim.', erro); }
+  atualizarPassoProgresso('duplicatas', 'ok');
+  atualizarChecklistItem('duplicatas', linhasDuplicatas.length > 0 ? 'ok' : 'parcial', linhasDuplicatas.length);
 
   // 14) Substitui produtos/duplicatas automaticamente só se ainda não houver dados digitados à mão;
   // caso contrário, pede confirmação antes de sobrescrever.
@@ -1636,7 +2038,11 @@ async function handleExcel(ev){
   }
 
   recalcularTotais();
+  atualizarPassoProgresso('totais', 'ok');
   render();
+  atualizarPassoProgresso('espelho', 'ok');
+  destacarCampos(idsDestacar);
+  registrarHistorico('excel', file.name);
 
   // 11) Diferencia o resultado final: sem campos reconhecidos / parcial / concluída.
   const nadaReconhecido = camposLidos === 0 && !produtosAplicados && !duplicatasAplicadas && linhasProdutos.length === 0 && linhasDuplicatas.length === 0;
@@ -1645,6 +2051,7 @@ async function handleExcel(ev){
       '⚠ O arquivo abriu normalmente (planilha válida), mas nenhum campo conhecido foi reconhecido nele. ' +
       'Confira se é o modelo certo (baixe um novo modelo se precisar) ou preencha os campos manualmente — isso não impede gerar o espelho.'
     );
+    mostrarToast('aviso', 'Excel aberto, mas nenhum campo reconhecido.');
     return;
   }
 
@@ -1674,6 +2081,16 @@ async function handleExcel(ev){
     listaFaltantes +
     '<br><br>Isso não impede nada — você pode baixar o PDF ou imprimir normalmente; os campos faltantes simplesmente aparecerão em branco.'
   );
+  mostrarResumoArquivo('resumo-excel', {
+    nome: file.name, tamanho: file.size, abas: Object.keys(matriz).length,
+    itens: [
+      ['Empresa/Emitente', camposLidos > 0],
+      ['Produtos', linhasProdutos.length > 0 || produtosAplicados],
+      ['Duplicatas', linhasDuplicatas.length > 0 || duplicatasAplicadas],
+      ['Totais', document.getElementById('i_totalnota').value !== '0,00'],
+    ],
+  });
+  mostrarToast(concluida ? 'sucesso' : 'aviso', concluida ? 'Excel importado com sucesso.' : 'Excel importado parcialmente — confira os avisos.');
 }
 
 // ---------- importar PDF / DOCX / TXT (heurístico, best-effort) ----------
@@ -1715,6 +2132,7 @@ async function handleDoc(ev){
     Não encontrado(s): ${faltando.join(', ') || '—'}.<br><br>
     Revise TODOS os campos — a leitura de PDF/Word não é estruturada como o modelo Excel. Isso não impede nada: os campos não encontrados só ficarão em branco, e você pode preenchê-los à mão e gerar o espelho normalmente.
   </div>`;
+  return { encontrados, faltando }; // exposto apenas para a camada de UX (destaque de campos); não usado pela lógica de extração
 }
 
 function aplicarHeuristicas(texto){
@@ -1783,7 +2201,8 @@ function aplicarHeuristicas(texto){
 // ---------- PDF ----------
 function baixarPDF(){
   const el = document.getElementById('danfe-page');
-  html2canvas(el, {scale:2, useCORS:true}).then(canvas=>{
+  // Item 11 do pedido: melhor nitidez/qualidade de fontes e linhas no PDF, sem alterar layout/conteúdo.
+  html2canvas(el, {scale:3, useCORS:true, imageTimeout:0, letterRendering:true}).then(canvas=>{
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF('p','mm','a4');
     const imgData = canvas.toDataURL('image/png');
@@ -1812,6 +2231,8 @@ function limparTudo(){
   renderFormularioProdutos();
   renderFormularioDuplicatas();
   render();
+  resetarPainelUX(); // camada de UX: limpa checklist/resumos de arquivo, sem afetar os dados acima
+  mostrarToast('aviso', 'Campos limpos.');
 }
 
 // ---------- inicialização ----------
@@ -1819,6 +2240,423 @@ addProduto({codigo:'0001', descricao:'PRODUTO MODELO', ncm:'00000000', cst:'000'
 addDuplicata({numero:'001', valor:'100,00', vencimento:''}, false);
 recalcularTotais();
 render();
+
+// ==========================================================================
+// ===================== CAMADA DE UX (não contém regras de negócio) ======
+// ==========================================================================
+// Tudo abaixo é puramente apresentação: toasts, barra/checklist de progresso,
+// destaque de campos, painel de estatísticas, resumo de arquivo, drag&drop,
+// zoom, painel responsivo, histórico e o loader do PDF. Nenhuma função aqui
+// lê XML, lê Excel, faz parsing, calcula totais ou monta o PDF — isso
+// continua 100% nas funções de negócio originais (handleXml, handleExcel,
+// handleDoc, aplicarHeuristicas, recalcularTotais, render, baixarPDF),
+// que são apenas CHAMADAS por estes wrappers, nunca reescritas.
+
+// ---------- utilidades ----------
+function formatarTamanhoArquivo(bytes){
+  if(bytes < 1024) return bytes + ' B';
+  if(bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/(1024*1024)).toFixed(2) + ' MB';
+}
+
+// ---------- toasts (item 10) ----------
+function mostrarToast(tipo, mensagem){
+  const container = document.getElementById('toast-container');
+  if(!container) return;
+  const icones = { sucesso:'✓', erro:'✖', aviso:'⚠', info:'ℹ' };
+  const el = document.createElement('div');
+  el.className = `toast ${tipo}`;
+  el.innerHTML = `<span class="icone">${icones[tipo] || 'ℹ'}</span><span class="msg">${escaparHtml(mensagem)}</span>`;
+  container.appendChild(el);
+  setTimeout(()=>{
+    el.classList.add('saindo');
+    setTimeout(()=> el.remove(), 220);
+  }, 4200);
+}
+
+// ---------- overlay de progresso (item 1) ----------
+let progressoPassosAtuais = [];
+function abrirProgresso(titulo, passos){
+  progressoPassosAtuais = passos;
+  const tituloEl = document.getElementById('progresso-titulo-texto');
+  const passosEl = document.getElementById('progresso-passos');
+  const barraEl = document.getElementById('progresso-barra');
+  const overlay = document.getElementById('progresso-overlay');
+  if(!tituloEl || !passosEl || !barraEl || !overlay) return;
+  tituloEl.textContent = titulo;
+  barraEl.style.width = '0%';
+  passosEl.innerHTML = passos.map(p=>
+    `<div class="progresso-passo" data-chave="${p.chave}"><span class="marca">○</span> ${escaparHtml(p.rotulo)}</div>`
+  ).join('');
+  overlay.classList.add('ativo');
+}
+function atualizarPassoProgresso(chave, status){
+  const el = document.querySelector(`#progresso-passos [data-chave="${chave}"]`);
+  if(!el) return;
+  el.classList.remove('ok','andamento');
+  const marca = el.querySelector('.marca');
+  if(status === 'ok'){ el.classList.add('ok'); if(marca) marca.textContent = '✓'; }
+  else if(status === 'andamento'){ el.classList.add('andamento'); if(marca) marca.textContent = '⏳'; }
+  const total = progressoPassosAtuais.length || 1;
+  const concluidos = document.querySelectorAll('#progresso-passos .progresso-passo.ok').length;
+  const barraEl = document.getElementById('progresso-barra');
+  if(barraEl) barraEl.style.width = Math.round((concluidos/total)*100) + '%';
+}
+function fecharProgresso(){
+  const overlay = document.getElementById('progresso-overlay');
+  if(!overlay) return;
+  setTimeout(()=> overlay.classList.remove('ativo'), 280); // pequeno atraso para o usuário ver a barra completa
+}
+
+// ---------- checklist de importação (item 2) ----------
+const CHECKLIST_DEFINICAO = [
+  { chave:'emitente', rotulo:'Empresa / Emitente' },
+  { chave:'cliente', rotulo:'Destinatário' },
+  { chave:'nota', rotulo:'Nota Fiscal' },
+  { chave:'transportador', rotulo:'Transporte' },
+  { chave:'produtos', rotulo:'Produtos' },
+  { chave:'duplicatas', rotulo:'Fatura' },
+  { chave:'totais', rotulo:'Impostos / Totais' },
+  { chave:'adicionais', rotulo:'Informações Adicionais' },
+];
+function renderChecklistBase(){
+  const box = document.getElementById('checklist-importacao');
+  if(!box) return;
+  box.innerHTML = CHECKLIST_DEFINICAO.map(c=>
+    `<div class="checklist-item pendente" data-chave="${c.chave}"><span class="bolinha"></span><span>${c.rotulo}</span><span class="qtd"></span></div>`
+  ).join('');
+}
+function atualizarChecklistItem(chave, status, qtd){
+  const el = document.querySelector(`#checklist-importacao [data-chave="${chave}"]`);
+  if(!el) return;
+  el.classList.remove('ok','parcial','pendente','andamento');
+  el.classList.add(status);
+  if(qtd !== undefined){ const q = el.querySelector('.qtd'); if(q) q.textContent = qtd; }
+}
+function atualizarChecklistPosXml(){
+  atualizarChecklistItem('emitente','ok');
+  atualizarChecklistItem('cliente','ok');
+  atualizarChecklistItem('nota','ok');
+  atualizarChecklistItem('transportador','ok');
+  atualizarChecklistItem('totais','ok');
+  atualizarChecklistItem('adicionais','ok');
+  atualizarChecklistItem('produtos', produtos.length ? 'ok' : 'parcial', produtos.length);
+  atualizarChecklistItem('duplicatas', duplicatas.length ? 'ok' : 'parcial', duplicatas.length);
+  ['emitente','cliente','nota','transportador','produtos','duplicatas','totais','espelho'].forEach(c=> atualizarPassoProgresso(c,'ok'));
+}
+
+// ---------- painel de estatísticas + contador de produtos (itens 4 e 12) ----------
+function calcularPreenchimentoSecao(idsCampos){
+  if(!idsCampos.length) return 100;
+  let preenchidos = 0;
+  idsCampos.forEach(id=>{ const el = document.getElementById(id); if(el && String(el.value||'').trim() !== '') preenchidos++; });
+  return Math.round((preenchidos/idsCampos.length)*100);
+}
+function atualizarPainelEstatisticas(){
+  const box = document.getElementById('stats-dashboard');
+  const totalNota = document.getElementById('i_totalnota') ? document.getElementById('i_totalnota').value : '0,00';
+  if(box){
+    const defEmitente = MODELO_SHEETS.find(d=>d.chave==='emitente');
+    const percEmpresa = defEmitente ? calcularPreenchimentoSecao(defEmitente.campos.map(c=>c[1])) : 0;
+    const todosIds = MODELO_SHEETS.flatMap(d=>d.campos.map(c=>c[1]));
+    const percGeral = calcularPreenchimentoSecao(todosIds);
+    box.innerHTML = `
+      <div class="stat-tile destaque"><div class="rotulo">Empresa</div><div class="valor">${percEmpresa}%</div></div>
+      <div class="stat-tile"><div class="rotulo">Produtos</div><div class="valor">${produtos.length}</div></div>
+      <div class="stat-tile"><div class="rotulo">Total</div><div class="valor">R$ ${fmtMoeda(totalNota)}</div></div>
+      <div class="stat-tile"><div class="rotulo">Preenchimento</div><div class="valor">${percGeral}%</div></div>
+    `;
+  }
+  const bannerQtd = document.getElementById('banner-produtos-qtd');
+  const bannerTotal = document.getElementById('banner-produtos-total');
+  if(bannerQtd) bannerQtd.textContent = `${produtos.length} ${produtos.length === 1 ? 'item' : 'itens'}`;
+  if(bannerTotal) bannerTotal.textContent = 'R$ ' + fmtMoeda(totalNota);
+}
+
+// ---------- destaque de campo recém-importado (item 3) ----------
+function destacarCampo(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.classList.remove('campo-recem-importado');
+  void el.offsetWidth; // reinicia a animação se o campo já estava destacado
+  el.classList.add('campo-recem-importado');
+  setTimeout(()=> el.classList.remove('campo-recem-importado'), 2000);
+}
+function destacarCampos(ids){ (ids||[]).forEach(destacarCampo); }
+
+// Campos que o handleXml (não alterado) é capaz de preencher — usados só para destacar,
+// nunca para decidir o que é lido (isso continua 100% dentro de handleXml).
+const XML_CAMPOS_CONHECIDOS = [
+  'e_razao','e_cnpj','e_ie','e_endereco','e_bairro','e_cep','e_municipio','e_uf','e_fone',
+  'd_nome','d_cnpj','d_ie','d_endereco','d_bairro','d_cep','d_municipio','d_uf','d_fone',
+  'n_natureza','n_numero','n_serie','n_tipo','n_dataemissao','n_datasaida','n_chave','n_protocolo',
+  'i_baseicms','i_valoricms','i_baseicmsst','i_valoricmsst','i_totalprodutos','i_frete','i_seguro','i_desconto','i_outras','i_ipi','i_totalnota',
+  't_nome','t_cnpj','t_ie','t_endereco','t_municipio','t_uf','t_frete',
+];
+// Mesma ideia para aplicarHeuristicas (não alterada): mapeia os rótulos que ela já retorna para os ids dos campos.
+const HEURISTICA_LABEL_PARA_IDS = {
+  'Chave de acesso': ['n_chave'],
+  'CNPJ do emitente': ['e_cnpj'],
+  'CNPJ/CPF do destinatário': ['d_cnpj'],
+  'Inscrição Estadual': ['e_ie'],
+  'Número da nota': ['n_numero'],
+  'Série': ['n_serie'],
+  'CEP': ['e_cep'],
+  'Telefone': ['e_fone'],
+  'Município/UF': ['e_municipio','e_uf'],
+  'Valor total da nota': ['i_totalnota'],
+  'Data de emissão': ['n_dataemissao'],
+  'Natureza da operação': ['n_natureza'],
+  'Protocolo de autorização': ['n_protocolo'],
+};
+
+// ---------- resumo do arquivo selecionado (item 5) ----------
+function mostrarResumoArquivo(containerId, dados){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  const agora = new Date().toLocaleString('pt-BR');
+  const linhasItens = (dados.itens || []).map(([label,ok])=>
+    `<div class="linha"><span>${escaparHtml(label)}</span><span class="${ok?'item-ok':'item-falta'}">${ok?'✔':'✖'}</span></div>`
+  ).join('');
+  el.innerHTML = `
+    <div class="resumo-arquivo">
+      <div class="linha"><span>Arquivo</span><span><b>${escaparHtml(dados.nome)}</b></span></div>
+      ${dados.abas !== undefined && dados.abas !== null ? `<div class="linha"><span>Abas encontradas</span><span>${dados.abas}</span></div>` : ''}
+      <div class="linha"><span>Tamanho</span><span>${formatarTamanhoArquivo(dados.tamanho)}</span></div>
+      <div class="linha"><span>Última atualização</span><span>${agora}</span></div>
+      ${linhasItens}
+    </div>`;
+}
+
+// ---------- arrastar e soltar (item 6) ----------
+function configurarDropzone(zonaId, inputId){
+  const zona = document.getElementById(zonaId);
+  const input = document.getElementById(inputId);
+  if(!zona || !input) return;
+  ['dragenter','dragover'].forEach(evento=>{
+    zona.addEventListener(evento, e=>{ e.preventDefault(); e.stopPropagation(); zona.classList.add('arrastando-sobre'); });
+  });
+  ['dragleave','drop'].forEach(evento=>{
+    zona.addEventListener(evento, e=>{ e.preventDefault(); e.stopPropagation(); zona.classList.remove('arrastando-sobre'); });
+  });
+  zona.addEventListener('drop', e=>{
+    const arquivos = e.dataTransfer.files;
+    if(arquivos && arquivos.length){
+      input.files = arquivos;
+      input.dispatchEvent(new Event('change'));
+    }
+  });
+}
+
+// ---------- zoom do espelho (item 7) — nunca afeta impressão/PDF ----------
+let zoomAtual = 100;
+let zoomAntesDaExportacao = null;
+function definirZoom(percentual){
+  zoomAtual = percentual;
+  const wrapper = document.getElementById('zoom-wrapper');
+  const pagina = document.getElementById('danfe-page');
+  if(wrapper && pagina){
+    // offsetHeight reflete o tamanho real do conteúdo (não é afetado pelo transform),
+    // por isso é medido a cada chamada — funciona mesmo se o espelho crescer (mais produtos etc.).
+    const alturaNatural = pagina.offsetHeight;
+    wrapper.style.height = (alturaNatural * percentual/100) + 'px';
+    wrapper.style.transform = `scale(${percentual/100})`;
+  }
+  document.querySelectorAll('.zoom-controles button').forEach(btn=>{
+    btn.classList.toggle('ativo', Number(btn.dataset.zoom) === percentual);
+  });
+}
+function prepararExportacao(){
+  zoomAntesDaExportacao = zoomAtual;
+  if(zoomAtual !== 100) definirZoom(100);
+}
+function restaurarZoomAposExportacao(){
+  if(zoomAntesDaExportacao !== null && zoomAntesDaExportacao !== 100) definirZoom(zoomAntesDaExportacao);
+  zoomAntesDaExportacao = null;
+}
+
+// ---------- painel lateral recolhível em telas pequenas (item 8) ----------
+function alternarPainelMobile(forcarEstado){
+  const painel = document.getElementById('painel-lateral');
+  const fundo = document.getElementById('fundo-painel-mobile');
+  if(!painel || !fundo) return;
+  const abrir = forcarEstado !== undefined ? forcarEstado : !painel.classList.contains('aberto');
+  painel.classList.toggle('aberto', abrir);
+  fundo.classList.toggle('ativo', abrir);
+}
+
+// ---------- loader do PDF sincronizado com a conclusão real (itens 9 e 11) ----------
+(function interceptarConclusaoDoPDF(){
+  // Não altera baixarPDF(): apenas observa quando pdf.save() é chamado (sem tocar em
+  // nenhuma linha da função original) para saber o instante exato em que o PDF terminou.
+  // O jsPDF atribui "save" como propriedade própria de cada instância (não no prototype),
+  // então a interceptação precisa envolver o CONSTRUTOR, não jsPDF.prototype.save.
+  function tentar(){
+    if(window.jspdf && window.jspdf.jsPDF && !window.jspdf.__uiConstrutorInterceptado){
+      const JsPDFOriginal = window.jspdf.jsPDF;
+      function JsPDFComAvisoDeConclusao(...args){
+        const instancia = new JsPDFOriginal(...args);
+        const saveOriginal = instancia.save.bind(instancia);
+        instancia.save = function(...argsSave){
+          const resultado = saveOriginal(...argsSave);
+          document.dispatchEvent(new CustomEvent('pdf-gerado'));
+          return resultado;
+        };
+        return instancia;
+      }
+      JsPDFComAvisoDeConclusao.prototype = JsPDFOriginal.prototype;
+      Object.setPrototypeOf(JsPDFComAvisoDeConclusao, JsPDFOriginal);
+      window.jspdf.jsPDF = JsPDFComAvisoDeConclusao;
+      window.jspdf.__uiConstrutorInterceptado = true;
+    } else if(!window.jspdf){
+      setTimeout(tentar, 200);
+    }
+  }
+  tentar();
+})();
+document.addEventListener('pdf-gerado', ()=>{
+  const loader = document.getElementById('loader-pdf');
+  if(loader) loader.classList.remove('ativo');
+  restaurarZoomAposExportacao();
+  mostrarToast('sucesso', 'PDF gerado com sucesso.');
+  registrarHistorico('pdf', document.getElementById('n_numero').value || 'modelo');
+});
+function baixarPDFComUI(){
+  const loader = document.getElementById('loader-pdf');
+  if(loader) loader.classList.add('ativo');
+  prepararExportacao();
+  try{
+    baixarPDF(); // função de negócio original — nenhuma linha alterada
+  }catch(e){
+    if(loader) loader.classList.remove('ativo');
+    restaurarZoomAposExportacao();
+    mostrarToast('erro', 'Erro ao gerar PDF.');
+    console.error(e);
+  }
+}
+function imprimirComUI(){
+  prepararExportacao();
+  mostrarToast('info', 'Impressão iniciada.');
+  window.print();
+  restaurarZoomAposExportacao();
+}
+
+// ---------- histórico (item 16) ----------
+const HISTORICO_CHAVE_STORAGE = 'danfe_historico_v1';
+let historicoMemoria = {};
+function obterHistorico(){
+  try{ const bruto = localStorage.getItem(HISTORICO_CHAVE_STORAGE); return bruto ? JSON.parse(bruto) : {}; }
+  catch(e){ return historicoMemoria; }
+}
+function salvarHistorico(historico){
+  try{ localStorage.setItem(HISTORICO_CHAVE_STORAGE, JSON.stringify(historico)); }
+  catch(e){ historicoMemoria = historico; }
+}
+function registrarHistorico(tipo, detalhe){
+  const historico = obterHistorico();
+  historico[tipo] = { detalhe, quando: new Date().toISOString() };
+  salvarHistorico(historico);
+  renderHistorico();
+}
+function renderHistorico(){
+  const box = document.getElementById('historico-painel');
+  if(!box) return;
+  const historico = obterHistorico();
+  const rotulos = { xml:'Último XML importado', excel:'Último Excel importado', doc:'Último PDF/Word importado', pdf:'Último PDF gerado' };
+  box.innerHTML = Object.entries(rotulos).map(([chave,rotulo])=>{
+    const item = historico[chave];
+    if(!item) return `<div class="linha"><span>${rotulo}: <span class="vazio">—</span></span></div>`;
+    const quando = new Date(item.quando).toLocaleString('pt-BR');
+    return `<div class="linha"><span>${rotulo}: <b>${escaparHtml(item.detalhe)}</b></span><span>${quando}</span></div>`;
+  }).join('');
+}
+
+// ---------- limpar também os painéis de UX ----------
+function resetarPainelUX(){
+  renderChecklistBase();
+  ['resumo-xml','resumo-excel','resumo-doc'].forEach(id=>{ const el = document.getElementById(id); if(el) el.innerHTML=''; });
+  atualizarPainelEstatisticas();
+}
+
+// ---------- wrappers de importação com UI (progresso, resumo, toasts, destaque) ----------
+// Cada wrapper apenas ORQUESTRA a função de negócio original (handleXml/handleExcel/handleDoc),
+// que é chamada sem nenhuma modificação em sua lógica de leitura/parsing/cálculo.
+function handleXmlComUI(ev){
+  const file = ev.target.files[0];
+  if(!file) return;
+  mostrarResumoArquivo('resumo-xml', { nome:file.name, tamanho:file.size });
+  abrirProgresso('Importando XML...', [
+    {chave:'emitente', rotulo:'Lendo Empresa/Emitente'},
+    {chave:'cliente', rotulo:'Lendo Destinatário'},
+    {chave:'nota', rotulo:'Lendo Nota Fiscal'},
+    {chave:'transportador', rotulo:'Lendo Transportador'},
+    {chave:'produtos', rotulo:'Lendo Produtos'},
+    {chave:'duplicatas', rotulo:'Lendo Duplicatas'},
+    {chave:'totais', rotulo:'Calculando Totais'},
+    {chave:'espelho', rotulo:'Gerando Espelho'},
+  ]);
+  ['emitente','cliente','nota','transportador','produtos','duplicatas','totais'].forEach(c=>atualizarPassoProgresso(c,'andamento'));
+  handleXml(ev);
+}
+
+async function handleExcelComUI(ev){
+  const file = ev.target.files[0];
+  if(!file) return;
+  abrirProgresso('Importando planilha...', [
+    {chave:'emitente', rotulo:'Lendo Empresa'},
+    {chave:'nota', rotulo:'Lendo Nota Fiscal'},
+    {chave:'cliente', rotulo:'Lendo Destinatário'},
+    {chave:'transportador', rotulo:'Lendo Transportador'},
+    {chave:'produtos', rotulo:'Lendo Produtos'},
+    {chave:'duplicatas', rotulo:'Lendo Duplicatas'},
+    {chave:'totais', rotulo:'Calculando Totais'},
+    {chave:'espelho', rotulo:'Gerando Espelho'},
+  ]);
+  ['emitente','nota','cliente','transportador','produtos','duplicatas'].forEach(c=>atualizarPassoProgresso(c,'andamento'));
+  try{
+    await handleExcel(ev);
+  } finally {
+    fecharProgresso();
+  }
+}
+
+async function handleDocComUI(ev){
+  const file = ev.target.files[0];
+  if(!file) return;
+  mostrarResumoArquivo('resumo-doc', { nome:file.name, tamanho:file.size });
+  abrirProgresso('Analisando documento...', [
+    {chave:'leitura', rotulo:'Lendo arquivo'},
+    {chave:'padroes', rotulo:'Buscando padrões conhecidos'},
+    {chave:'espelho', rotulo:'Gerando Espelho'},
+  ]);
+  atualizarPassoProgresso('leitura','andamento');
+  atualizarPassoProgresso('padroes','andamento');
+  try{
+    const resultado = await handleDoc(ev);
+    atualizarPassoProgresso('leitura','ok');
+    atualizarPassoProgresso('padroes','ok');
+    atualizarPassoProgresso('espelho','ok');
+    if(resultado){
+      const ids = resultado.encontrados.flatMap(label => HEURISTICA_LABEL_PARA_IDS[label] || []);
+      destacarCampos(ids);
+      mostrarToast(resultado.encontrados.length ? 'sucesso' : 'aviso', `Documento analisado: ${resultado.encontrados.length} padrão(ões) reconhecido(s).`);
+      registrarHistorico('doc', file.name);
+    } else {
+      mostrarToast('erro', 'Não foi possível ler este arquivo automaticamente.');
+    }
+  } finally {
+    fecharProgresso();
+  }
+}
+
+// ---------- inicialização da camada de UX (roda depois da inicialização de negócio) ----------
+renderChecklistBase();
+configurarDropzone('dropzone-xml','input-xml');
+configurarDropzone('dropzone-excel','input-excel');
+configurarDropzone('dropzone-doc','input-doc');
+definirZoom(100);
+renderHistorico();
+atualizarPainelEstatisticas();
 </script>
 </body>
 </html>

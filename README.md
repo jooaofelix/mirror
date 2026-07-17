@@ -7,6 +7,10 @@ O documento resultante **NÃO é uma DANFE válida**, não substitui a NF-e orig
 
 Abra o arquivo `index.html` diretamente no navegador (não precisa de servidor nem de instalação — é um app estático de página única). Preencha os campos manualmente ou importe dados por um dos métodos abaixo, confira o resultado no painel visual e baixe o PDF ou imprima.
 
+## Interface
+
+O painel esquerdo é organizado em cards recolhíveis (Exportação, Status, Arquivos, Histórico e cada seção de dados). Durante uma importação, uma barra de progresso e um checklist mostram em tempo real o que já foi lido (Empresa, Destinatário, Produtos, Impostos, Transporte, Totais, Fatura); os campos preenchidos automaticamente piscam em verde por 2 segundos para facilitar a conferência. Acima da lista de produtos há um contador de itens/valor total, e um pequeno painel de estatísticas (preenchimento por seção) fica sempre visível. XML e Excel também podem ser soltos por arrastar-e-soltar sobre as respectivas áreas, além do clique tradicional. O espelho tem controles de zoom (50%–200%) que afetam só a visualização em tela — a impressão e o PDF exportado nunca são alterados por eles. Nada disso muda a leitura de XML/Excel/PDF, os cálculos ou o conteúdo do PDF gerado — é só a camada visual por cima da mesma lógica.
+
 ## Métodos de importação de dados
 
 | Método | Confiabilidade | Observação |
