@@ -77,3 +77,51 @@ Bibliotecas usadas (via CDN, carregadas no `<head>`):
 ## Publicando (opcional)
 
 Por ser um único arquivo estático, pode ser hospedado em qualquer serviço de páginas estáticas (GitHub Pages, Netlify, Vercel etc.) sem configuração adicional — basta publicar `index.html`.
+
+---
+
+# Ficha de Cadastro de Empresa (CNPJ) — envio por e-mail
+
+Segunda ferramenta deste repositório, independente da DANFE acima: gera a
+**Ficha de Cadastro de Empresa** (dados da empresa + sócios + plano/tributação)
+em PDF e envia por e-mail.
+
+Abra `ficha-cnpj.html` diretamente no navegador — também é um app estático de
+página única, sem instalação.
+
+## Como funciona
+
+1. **Importe o Cartão CNPJ em PDF** (Comprovante de Inscrição e de Situação
+   Cadastral, emitido pela Receita Federal): o site lê o texto do PDF no
+   navegador e tenta preencher automaticamente Contratante, CNPJ, Endereço,
+   Bairro, Cidade, Estado, CEP e CNAE Principal/Secundário. Como é busca por
+   padrões (não é um formato estruturado como XML), **sempre confira os
+   campos antes de gerar a ficha** — o site nunca bloqueia a geração mesmo
+   se algum campo não for reconhecido.
+2. **Preencha à mão** o que o Cartão CNPJ não traz: Nº do contrato,
+   Contato Principal, Administração, Sócio 01/02 e capital de cada um,
+   Vigência, Plano, Tributação e Valor do Capital.
+3. **Baixe o PDF** da ficha (idêntico ao layout usado internamente) ou
+   **envie por e-mail** direto pelo site, com o PDF já anexado.
+
+## Envio de e-mail (gratuito, sem servidor próprio)
+
+O envio usa um backend gratuito em **Google Apps Script**, vinculado à sua
+própria conta Gmail — sem custo, sem cartão de crédito, sem plano pago
+(limite de 100 e-mails/dia numa conta Gmail comum). As instruções completas
+de deploy estão em [`apps-script/README.md`](./apps-script/README.md).
+Depois de publicado, cole a URL do Web App e o token na seção
+**"Configuração do envio"** dentro de `ficha-cnpj.html`.
+
+## Estrutura
+
+```
+ficha-cnpj.html        # aplicação (HTML + CSS + JS), sem dependências de build
+apps-script/
+  Code.gs               # backend de envio de e-mail (Google Apps Script)
+  README.md             # passo a passo de deploy do Code.gs
+```
+
+Bibliotecas usadas (via CDN): [pdf.js](https://mozilla.github.io/pdf.js/)
+(leitura do Cartão CNPJ) e [html2canvas](https://github.com/niklasvh/html2canvas)
++ [jsPDF](https://github.com/parallax/jsPDF) (geração do PDF da ficha).
