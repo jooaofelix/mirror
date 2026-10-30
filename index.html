@@ -14,9 +14,8 @@
 <style>
   /* ==========================================================================
      CAMADA VISUAL / UX — design system corporativo.
-     Nada nesta folha de estilo altera a estrutura ou o layout do espelho de
-     DANFE (bloco "DANFE em si" logo abaixo, usado pela impressão e pelo PDF):
-     essa parte permanece byte-a-byte idêntica à versão anterior.
+     Nada nesta camada altera a estrutura ou o layout do espelho de DANFE
+     (bloco "DANFE em si" logo abaixo, usado pela impressão e pelo PDF).
      ========================================================================== */
   :root{
     --azul:#1d4d8f;
@@ -462,7 +461,15 @@
     vertical-align:top;
     padding:2px 4px;
     position:relative;
+    overflow-wrap:anywhere; /* texto longo quebra e o campo cresce em altura, sem invadir o vizinho */
   }
+  /* tabela de produtos: as colunas numéricas nunca quebram e alargam para caber
+     o valor inteiro; a descrição cede o espaço e quebra em mais linhas */
+  table.grid.produtos{ table-layout:auto; }
+  table.grid.produtos td{ white-space:nowrap; }
+  table.grid.produtos td.desc{ white-space:normal; }
+  /* último recurso (aplicado pelo render): se nem assim couber na folha, os números também quebram */
+  table.grid.produtos.quebrar-tudo td{ white-space:normal; }
   .lbl{
     display:block;
     font-size:6px;
@@ -492,6 +499,7 @@
 
   /* cabecalho */
   .cabecalho{display:grid;grid-template-columns:38% 24% 38%;}
+  .cabecalho > div{min-width:0;overflow-wrap:anywhere;}
   .cab-emit{border:1px solid var(--borda);padding:4px;display:flex;flex-direction:column;gap:2px;}
   .cab-emit .razao{font-size:13px;font-weight:800;}
   .cab-emit .end{font-size:9px;}
@@ -923,11 +931,11 @@
 
       <!-- produtos -->
       <div class="sec-titulo">DADOS DO PRODUTO / SERVIÇOS</div>
-      <table class="grid" style="font-size:8px;">
+      <table class="grid produtos" style="font-size:8px;">
         <thead>
           <tr>
             <td style="width:8%;"><span class="lbl">Código</span></td>
-            <td style="width:24%;"><span class="lbl">Descrição</span></td>
+            <td style="width:24%;" class="desc"><span class="lbl">Descrição</span></td>
             <td style="width:7%;"><span class="lbl">NCM/SH</span></td>
             <td style="width:5%;"><span class="lbl">CST</span></td>
             <td style="width:6%;"><span class="lbl">CFOP</span></td>
@@ -1099,6 +1107,17 @@ function recalcularTotais(){
 function g(id){ return document.getElementById(id).value; }
 function set(id, txt){ document.getElementById(id).textContent = txt || ''; }
 
+// As colunas numéricas da tabela de produtos alargam para caber o valor inteiro.
+// Se a soma passar da largura útil da folha, libera a quebra também nos números
+// (a linha fica mais alta em vez de a tabela sair da página).
+function ajustarLarguraTabelaProdutos(tabela){
+  tabela.classList.remove('quebrar-tudo');
+  const pagina = document.getElementById('danfe-page');
+  const estilo = getComputedStyle(pagina);
+  const larguraUtil = pagina.clientWidth - parseFloat(estilo.paddingLeft) - parseFloat(estilo.paddingRight);
+  if(tabela.offsetWidth > larguraUtil + 1) tabela.classList.add('quebrar-tudo');
+}
+
 function render(){
   set('r_emit', g('e_razao'));
   set('r_emissao', fmtData(g('n_dataemissao')));
@@ -1176,7 +1195,7 @@ function render(){
     const total = qtd*vUnit;
     return `<tr>
       <td>${p.codigo}</td>
-      <td>${p.descricao}</td>
+      <td class="desc">${p.descricao}</td>
       <td>${p.ncm}</td>
       <td>${p.cst}</td>
       <td>${p.cfop}</td>
@@ -1189,6 +1208,7 @@ function render(){
       <td>${fmtMoeda(p.valorIpi||0)}</td>
     </tr>`;
   }).join('');
+  ajustarLarguraTabelaProdutos(tbody.closest('table'));
 
   set('ad_info', g('a_info'));
   set('ad_fisco', g('a_fisco'));
